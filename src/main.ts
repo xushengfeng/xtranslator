@@ -449,6 +449,42 @@ let tencentTransmart: eF = (text: string, from: string, to: string, keys: string
             .catch(rj);
     });
 };
+let tencent: eF = (text: string, from: string, to: string, keys: string[]) => {
+    return new Promise((re: (text: string) => void, rj) => {
+        const guid = crypto.randomUUID();
+
+        fetch("https://fanyi.qq.com/api/reauth12f", {
+            method: "POST",
+            headers: { Cookie: `fy_guid=${guid}` },
+        })
+            .then((v) => v.json())
+            .then((q) => {
+                const qtv = q.qtv,
+                    qtk = q.qtk;
+
+                const data = {
+                    source: from,
+                    target: to,
+                    sourceText: text,
+                    qtk: qtk,
+                    qtv: qtv,
+                    sessionUuid: `translate_uuid${new Date().getTime()}`,
+                };
+                fetch("https://fanyi.qq.com/api/translate", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                    },
+                    body: new URLSearchParams(data),
+                })
+                    .then((response) => response.json())
+                    .then((result) => {
+                        re(result.auto_translation[0]);
+                    })
+                    .catch(rj);
+            });
+    });
+};
 
 let engineConfig: {
     [name in
@@ -461,7 +497,8 @@ let engineConfig: {
         | "chatgpt"
         | "niu"
         | "volcengine"
-        | "tencentTransmart"]: {
+        | "tencentTransmart"
+        | "tencent"]: {
         key: { name: string; text?: string }[];
         lan: language[number][];
         targetLang?: language[number][];
@@ -1251,6 +1288,32 @@ let engineConfig: {
         ],
         lan2lan: { "zh-Hant": "zh-TW" },
         f: tencentTransmart,
+    },
+    tencent: {
+        key: [],
+        lan: [
+            "auto",
+            "zh",
+            "zh-Hant",
+            "en",
+            "ja",
+            "ko",
+            "fr",
+            "es",
+            "ru",
+            "de",
+            "it",
+            "tr",
+            "pt",
+            "vi",
+            "id",
+            "th",
+            "ms",
+            "ar",
+            "km",
+        ],
+        lan2lan: { "zh-Hant": "zh-TW" },
+        f: tencent,
     },
 };
 

@@ -32,6 +32,7 @@ console.log(xtranslator.e.chatgpt.run('hi', 'auto', 'zh'));
 -   [x] chatgpt
 -   [x] 小牛
 -   [x] 腾讯交互式
+-   [x] 腾讯
 -   [x] 火山
 -   [ ] 谷歌
 -   [ ] Yandex
