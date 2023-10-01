@@ -417,8 +417,51 @@ let volcengine: eF = (text: string, from: string, to: string, keys: string[]) =>
     });
 };
 
+let tencentTransmart: eF = (text: string, from: string, to: string, keys: string[]) => {
+    return new Promise((re: (text: string) => void, rj) => {
+        const data = {
+            header: {
+                fn: "auto_translation",
+            },
+            type: "plain",
+            model_category: "normal",
+            text_domain: "general",
+            source: {
+                lang: from,
+                text_list: [text],
+            },
+            target: {
+                lang: to,
+            },
+        };
+
+        fetch("https://yi.qq.com/api/imt", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+        })
+            .then((response) => response.json())
+            .then((result) => {
+                re(result.auto_translation[0]);
+            })
+            .catch(rj);
+    });
+};
+
 let engineConfig: {
-    [name in "youdao" | "baidu" | "deepl" | "deeplx" | "caiyun" | "bing" | "chatgpt" | "niu" | "volcengine"]: {
+    [name in
+        | "youdao"
+        | "baidu"
+        | "deepl"
+        | "deeplx"
+        | "caiyun"
+        | "bing"
+        | "chatgpt"
+        | "niu"
+        | "volcengine"
+        | "tencentTransmart"]: {
         key: { name: string; text?: string }[];
         lan: language[number][];
         targetLang?: language[number][];
@@ -1182,6 +1225,32 @@ let engineConfig: {
         ],
         lan2lan: {},
         f: volcengine,
+    },
+    tencentTransmart: {
+        key: [],
+        lan: [
+            "auto",
+            "zh",
+            "zh-Hant",
+            "en",
+            "ja",
+            "ko",
+            "fr",
+            "es",
+            "ru",
+            "de",
+            "it",
+            "tr",
+            "pt",
+            "vi",
+            "id",
+            "th",
+            "ms",
+            "ar",
+            "km",
+        ],
+        lan2lan: { "zh-Hant": "zh-TW" },
+        f: tencentTransmart,
     },
 };
 
