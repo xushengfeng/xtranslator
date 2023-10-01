@@ -479,7 +479,7 @@ let tencent: eF = (text: string, from: string, to: string, keys: string[]) => {
                 })
                     .then((response) => response.json())
                     .then((result) => {
-                        re(result.auto_translation[0]);
+                        re(result.translate.records[0].targetText);
                     })
                     .catch(rj);
             });
