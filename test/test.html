@@ -6,9 +6,11 @@
 </head>
 
 <body>
-    <script src="../dist/match.umd.js"></script>
+    <script src="../dist/xtranslator.umd.js"></script>
     <script>
-        console.log(Translator);
+        console.log(xtranslator);
+        xtranslator.e.volcengine.setKeys([]);
+        console.log(xtranslator.e.volcengine.run('hi', 'auto', 'zh'));
     </script>
 </body>
 
