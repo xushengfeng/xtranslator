@@ -181,14 +181,22 @@ type eF = (text: string, from: string, to: string, keys: string[]) => Promise<st
 class Translator {
     translate: eF;
     keys: string[];
+    lan: language[number][];
+    targetLan: string[];
+    lan2lan: { [lan: string]: string };
     constructor(op: { f: eF; lan: language[number][]; lan2lan: { [lan: string]: string }; targetLan?: string[] }) {
         this["translate"] = op.f;
+        this["lan"] = op.lan;
+        this["targetLan"] = op.targetLan ?? op.lan;
+        this["lan2lan"] = op.lan2lan;
     }
     setKeys(keys: string[]) {
         this.keys = keys;
     }
     run(text: string, from: string, to: string) {
         if (!this.keys.every((v) => v)) return;
+        from = this.lan2lan[from] ?? from;
+        to = this.lan2lan[to] ?? to;
         return this.translate(text, from, to, this.keys);
     }
 }
