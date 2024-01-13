@@ -1518,11 +1518,12 @@ let engineConfig: {
 
 let e = {} as { [key in keyof typeof engineConfig]: Translator };
 for (let i in engineConfig) {
+    let item = engineConfig[i] as (typeof engineConfig)["bing"];
     e[i] = new Translator({
-        f: engineConfig[i].f,
-        lan: engineConfig[i].lan,
-        lan2lan: engineConfig[i].lan2lan,
-        targetLan: engineConfig[i].target_lang,
+        f: item.f,
+        lan: item.lan,
+        lan2lan: item.lan2lan,
+        targetLan: item.targetLang,
     });
 }
 
