@@ -30,6 +30,7 @@ console.log(xtranslator.e.chatgpt.run('hi', 'auto', 'zh'));
 -   [x] deepl
 -   [x] deeplx
 -   [x] chatgpt
+-   [x] gemini
 -   [x] 小牛
 -   [x] 腾讯交互式
 -   [x] 腾讯
