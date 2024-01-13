@@ -182,9 +182,14 @@ class Translator {
     translate: eF;
     keys: string[];
     _lan: language[number][];
-    _targetLan: string[];
-    _lan2lan: { [lan: string]: string };
-    constructor(op: { f: eF; lan: language[number][]; lan2lan: { [lan: string]: string }; targetLan?: string[] }) {
+    _targetLan: language[number][];
+    _lan2lan: { [lan in language[number]]?: string };
+    constructor(op: {
+        f: eF;
+        lan: language[number][];
+        lan2lan: { [lan in language[number]]?: string };
+        targetLan?: language[number][];
+    }) {
         this["translate"] = op.f;
         this["_lan"] = op.lan;
         this["_targetLan"] = op.targetLan ?? op.lan;
@@ -527,7 +532,7 @@ let engineConfig: {
         key: { name: string; text?: string }[];
         lan: language[number][];
         targetLang?: language[number][];
-        lan2lan: { [lan: string]: string };
+        lan2lan: { [lan in language[number]]?: string };
         f: eF;
     };
 } = {
