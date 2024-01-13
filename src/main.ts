@@ -382,7 +382,8 @@ let chatgpt: eF = (text: string, from: string, to: string, keys: string[]) => {
         };
         let userConfig = keys[2];
         if (userConfig) {
-            let c = (JSON.parse(userConfig).messages = m);
+            let c = JSON.parse(userConfig);
+            c["messages"] = m;
             userConfig = JSON.stringify(c);
         } else {
             userConfig = JSON.stringify(config);
