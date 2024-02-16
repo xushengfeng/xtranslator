@@ -11,9 +11,9 @@ npm i xtranslator
 ```
 
 ```js
-import * as xtranslator from xtranslator
+import xtranslator from "xtranslator";
 xtranslator.e.chatgpt.setKeys(["key"]);
-console.log(xtranslator.e.chatgpt.run('hi', 'auto', 'zh'));
+console.log(xtranslator.e.chatgpt.run("hi", "auto", "zh"));
 ```
 
 ```html
