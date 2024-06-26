@@ -395,7 +395,7 @@ let chatgpt: eF = (text: string, from: string, to: string, keys: string[]) => {
         })
             .then((v) => v.json())
             .then((t) => {
-                re(t.choices[0].message.content);
+                re(t.message?.content || t.choices[0].message.content);
             })
             .catch(rj);
     });
