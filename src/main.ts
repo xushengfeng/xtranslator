@@ -204,6 +204,18 @@ class Translator {
         to = this._lan2lan[to] ?? to;
         return this.translate(text, from, to, this.keys);
     }
+    async test() {
+        const from = this._lan.find((w) => w.slice(0, 2) === "en") || this._lan[0];
+        const to = this._targetLan.find((w) => w.slice(0, 2) === "zh") || this._targetLan[0];
+        const t = "The test passed";
+        const r = await this.run(t, from, to);
+        return {
+            from,
+            to,
+            testText: t,
+            result: r,
+        };
+    }
     get lan() {
         return this["_lan"];
     }
