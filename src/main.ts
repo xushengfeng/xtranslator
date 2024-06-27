@@ -391,6 +391,7 @@ let chatgpt: eF = (text: string, from: string, to: string, keys: string[]) => {
             frequency_penalty: 1,
             presence_penalty: 1,
             messages: m,
+            stream: false,
         };
         let userConfig = keys[2];
         if (userConfig) {
