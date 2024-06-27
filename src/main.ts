@@ -179,11 +179,11 @@ type language = [
 type eF = (text: string, from: string, to: string, keys: string[]) => Promise<string>;
 
 class Translator {
-    translate: eF;
-    keys: string[];
-    _lan: language[number][];
-    _targetLan: language[number][];
-    _lan2lan: { [lan in language[number]]?: string };
+    private translate: eF;
+    private keys: string[];
+    private _lan: language[number][];
+    private _targetLan: language[number][];
+    private _lan2lan: { [lan in language[number]]?: string };
     constructor(op: {
         f: eF;
         lan: language[number][];
