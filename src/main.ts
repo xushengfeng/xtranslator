@@ -178,6 +178,13 @@ type language = [
 
 type eF = (text: string, from: string, to: string, keys: string[]) => Promise<string>;
 
+type lanOption = {
+    text?: string;
+    auto?: string;
+    sort?: "src" | "text";
+    firstLan?: string;
+};
+
 class Translator {
     private translate: eF;
     private keys: string[];
@@ -225,6 +232,44 @@ class Translator {
     get lan2lan() {
         return this["_lan2lan"];
     }
+    getLanT(op?: lanOption) {
+        return sLan(this._lan, op);
+    }
+    getTargetLanT(op?: lanOption) {
+        return sLan(this._targetLan, op);
+    }
+}
+
+function sLan(lans: language[number][], op?: lanOption) {
+    let lan = (l: string) => {
+        if (l === "auto") return op?.auto || "*";
+        return l;
+    };
+    if (op?.text) {
+        const languageName = new Intl.DisplayNames(op.text, { type: "language" });
+        lan = (l: string) => {
+            if (l === "auto") return op?.auto || "*";
+            return languageName.of(l);
+        };
+    }
+
+    const lansMap: { lan: language[number]; text: string }[] = lans.map((i) => {
+        return { lan: i, text: lan(i) };
+    });
+    if (op?.sort === "text") lansMap.sort((a, b) => a.text.localeCompare(b.text));
+    else lansMap.sort((a, b) => a.lan.localeCompare(b.lan));
+
+    function lanFirst(lanList: typeof lansMap, mainLan: string) {
+        if (!mainLan) return lanList;
+        let i = lanList.findIndex((l) => l.lan === mainLan);
+        if (i < 0) i = lanList.findIndex((l) => l.lan.split("-")[0] === mainLan.split("-")[0]);
+        if (i < 0) return lanList;
+        lanList = structuredClone(lanList);
+        lanList.unshift(lanList.splice(Number(i), 1)[0]);
+        return lanList;
+    }
+
+    return lanFirst(lanFirst(lansMap, "auto"), op?.firstLan || op?.text);
 }
 
 import MD5 from "blueimp-md5";
