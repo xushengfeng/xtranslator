@@ -261,8 +261,9 @@ function sLan(lans: language[number][], op?: lanOption) {
 
     function lanFirst(lanList: typeof lansMap, mainLan: string) {
         if (!mainLan) return lanList;
-        let i = lanList.findIndex((l) => l.lan === mainLan);
-        if (i < 0) i = lanList.findIndex((l) => l.lan.split("-")[0] === mainLan.split("-")[0]);
+        mainLan = mainLan.toLowerCase();
+        let i = lanList.findIndex((l) => l.lan.toLowerCase() === mainLan);
+        if (i < 0) i = lanList.findIndex((l) => l.lan.toLowerCase().split("-")[0] === mainLan.split("-")[0]);
         if (i < 0) return lanList;
         lanList = structuredClone(lanList);
         lanList.unshift(lanList.splice(Number(i), 1)[0]);
