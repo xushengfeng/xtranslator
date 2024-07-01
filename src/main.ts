@@ -275,7 +275,8 @@ function sLan(lans: language[number][], op?: lanOption) {
 
 import MD5 from "blueimp-md5";
 import fetchJSONP from "fetch-jsonp";
-import CryptoJS from "crypto-js";
+import sha256 from "crypto-js/sha256";
+import enc from "crypto-js/enc-hex";
 
 let youdao: eF = (text: string, from: string, to: string, keys: string[]) => {
     return new Promise((re: (text: string) => void, rj) => {
@@ -284,7 +285,7 @@ let youdao: eF = (text: string, from: string, to: string, keys: string[]) => {
         let salt = String(new Date().getTime());
         let curtime = String(Math.round(new Date().getTime() / 1000));
         let str1 = appKey + truncate(text) + salt + curtime + key;
-        let sign = CryptoJS.SHA256(str1).toString(CryptoJS.enc.Hex);
+        let sign = sha256(str1).toString(enc);
         let data = {
             q: text,
             appKey: appKey,

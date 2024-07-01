@@ -9,6 +9,5 @@ export default defineConfig({
             name: "xtranslator",
             fileName: (format) => `xtranslator.${format}.js`,
         },
-        sourcemap: true,
     },
 });
