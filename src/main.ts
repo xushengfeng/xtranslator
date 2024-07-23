@@ -432,7 +432,7 @@ let chatgpt: eF = (text: string, from: string, to: string, keys: string[]) => {
             { role: "user", content: userPrompt },
         ];
         let config = {
-            model: "gpt-3.5-turbo",
+            model: "gpt-4o-mini",
             temperature: 0.5,
             top_p: 1,
             frequency_penalty: 1,
