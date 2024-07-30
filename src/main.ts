@@ -176,8 +176,6 @@ type language = [
     "sr",
 ];
 
-type stringType = string | string[];
-
 type eF = (
     text: string[],
     from: string,
@@ -192,7 +190,7 @@ type lanOption = {
     firstLan?: string;
 };
 
-class Translator<t extends stringType> {
+class Translator<t extends string | string[]> {
     private translate: eF;
     private keys: string[];
     private _lan: language[number][];
@@ -212,16 +210,16 @@ class Translator<t extends stringType> {
     setKeys(keys: string[]) {
         this.keys = keys;
     }
-    async run(text: t, from: string, to: string): Promise<t> {
+    async run<tt extends t>(text: tt, from: string, to: string): Promise<tt> {
         if (!this.keys.every((v) => v)) return;
         const nfrom = this._lan2lan[from] ?? from;
         const nto = this._lan2lan[to] ?? to;
         if (typeof text === "string") {
             return (
                 await this.translate([text], nfrom, nto, this.keys)
-            )[0] as t;
+            )[0] as tt;
         }
-        return this.translate(text, nfrom, nto, this.keys) as Promise<t>;
+        return this.translate(text, nfrom, nto, this.keys) as Promise<tt>;
     }
     async test() {
         const from =
