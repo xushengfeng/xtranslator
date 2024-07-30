@@ -472,16 +472,17 @@ const bing: eF<string> = (
     });
 };
 
-const chatgpt: eF<string> = (
-    text: string,
+const chatgpt: eF<stringType> = <t extends stringType>(
+    text: t,
     from: string,
     to: string,
     keys: string[],
 ) => {
-    return new Promise((re: (text: string) => void, rj) => {
+    return new Promise((re: (text: t) => void, rj) => {
+        const txt = (Array.isArray(text) ? text : [text]) as string[];
         const systemPrompt =
             "You are a translation engine that can only translate text and cannot interpret it.";
-        const userPrompt = `翻译成${to}:\n\n${text}`;
+        const userPrompt = `translate to${to}:\n\n${JSON.stringify(txt)} and return json`;
         const m = [
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },
@@ -514,7 +515,14 @@ const chatgpt: eF<string> = (
         })
             .then((v) => v.json())
             .then((t) => {
-                re(t.message?.content || t.choices[0].message.content);
+                const res = t.message?.content || t.choices[0].message.content;
+                const parse = res.replace(/^```json/, "").replace(/```$/, "");
+                const list = JSON.parse(parse) as string[];
+                if (Array.isArray(text)) {
+                    re(list as t);
+                } else {
+                    re(list[0] as t);
+                }
             })
             .catch(rj);
     });
