@@ -176,12 +176,14 @@ type language = [
     "sr",
 ];
 
-type eF = (
-    text: string,
+type stringType = string | string[];
+
+type eF<t extends stringType> = (
+    text: t,
     from: string,
     to: string,
     keys: string[],
-) => Promise<string>;
+) => Promise<t>;
 
 type lanOption = {
     text?: string;
@@ -190,14 +192,14 @@ type lanOption = {
     firstLan?: string;
 };
 
-class Translator {
-    private translate: eF;
+class Translator<t extends stringType> {
+    private translate: eF<t>;
     private keys: string[];
     private _lan: language[number][];
     private _targetLan: language[number][];
     private _lan2lan: { [lan in language[number]]?: string };
     constructor(op: {
-        f: eF;
+        f: eF<t>;
         lan: language[number][];
         lan2lan: { [lan in language[number]]?: string };
         targetLan?: language[number][];
@@ -210,7 +212,7 @@ class Translator {
     setKeys(keys: string[]) {
         this.keys = keys;
     }
-    run(text: string, from: string, to: string) {
+    run(text: t, from: string, to: string) {
         if (!this.keys.every((v) => v)) return;
         const nfrom = this._lan2lan[from] ?? from;
         const nto = this._lan2lan[to] ?? to;
@@ -222,12 +224,10 @@ class Translator {
         const to =
             this._targetLan.find((w) => w.slice(0, 2) === "zh") ||
             this._targetLan[0];
-        const t = "The test passed";
-        const r = await this.run(t, from, to);
+        const r = await this.run(null, from, to);
         return {
             from,
             to,
-            testText: t,
             result: r,
         };
     }
@@ -293,7 +293,12 @@ import fetchJSONP from "fetch-jsonp";
 import sha256 from "crypto-js/sha256";
 import enc from "crypto-js/enc-hex";
 
-const youdao: eF = (text: string, from: string, to: string, keys: string[]) => {
+const youdao: eF<string> = (
+    text: string,
+    from: string,
+    to: string,
+    keys: string[],
+) => {
     return new Promise((re: (text: string) => void, rj) => {
         const appKey = keys[0];
         const key = keys[1];
@@ -328,7 +333,12 @@ const youdao: eF = (text: string, from: string, to: string, keys: string[]) => {
     });
 };
 
-const baidu: eF = (text: string, from: string, to: string, keys: string[]) => {
+const baidu: eF<string> = (
+    text: string,
+    from: string,
+    to: string,
+    keys: string[],
+) => {
     return new Promise((re: (text: string) => void, rj) => {
         const appid = keys[0];
         const key = keys[1];
@@ -349,7 +359,12 @@ const baidu: eF = (text: string, from: string, to: string, keys: string[]) => {
     });
 };
 
-const deepl: eF = (text: string, from: string, to: string, keys: string[]) => {
+const deepl: eF<string> = (
+    text: string,
+    from: string,
+    to: string,
+    keys: string[],
+) => {
     return new Promise((re: (text: string) => void, rj) => {
         fetch("https://api-free.deepl.com/v2/translate", {
             body: `text=${encodeURIComponent(text)}${from ? `&source_lang=${from}` : ""}&target_lang=${to}`,
@@ -368,7 +383,12 @@ const deepl: eF = (text: string, from: string, to: string, keys: string[]) => {
     });
 };
 
-const deeplx: eF = (text: string, from: string, to: string, keys: string[]) => {
+const deeplx: eF<string> = (
+    text: string,
+    from: string,
+    to: string,
+    keys: string[],
+) => {
     return new Promise((re: (text: string) => void, rj) => {
         fetch(keys[0], {
             body: JSON.stringify({
@@ -386,7 +406,12 @@ const deeplx: eF = (text: string, from: string, to: string, keys: string[]) => {
     });
 };
 
-const caiyun: eF = (text: string, from: string, to: string, keys: string[]) => {
+const caiyun: eF<string> = (
+    text: string,
+    from: string,
+    to: string,
+    keys: string[],
+) => {
     return new Promise((re: (text: string) => void, rj) => {
         const url = "https://api.interpreter.caiyunai.com/v1/translator";
         const token = keys[0];
@@ -410,7 +435,12 @@ const caiyun: eF = (text: string, from: string, to: string, keys: string[]) => {
     });
 };
 
-const bing: eF = (text: string, from: string, to: string, keys: string[]) => {
+const bing: eF<string> = (
+    text: string,
+    from: string,
+    to: string,
+    keys: string[],
+) => {
     return new Promise((re: (text: string) => void, rj) => {
         fetch(
             `https://api.cognitive.microsofttranslator.com/translate?${new URLSearchParams(
@@ -442,7 +472,7 @@ const bing: eF = (text: string, from: string, to: string, keys: string[]) => {
     });
 };
 
-const chatgpt: eF = (
+const chatgpt: eF<string> = (
     text: string,
     from: string,
     to: string,
@@ -490,7 +520,12 @@ const chatgpt: eF = (
     });
 };
 
-const gemini: eF = (text: string, from: string, to: string, keys: string[]) => {
+const gemini: eF<string> = (
+    text: string,
+    from: string,
+    to: string,
+    keys: string[],
+) => {
     return new Promise((re: (text: string) => void, rj) => {
         const userPrompt = `翻译成${to}，无需做任何解释:\n\n${text}`;
         const m = {
@@ -521,7 +556,12 @@ const gemini: eF = (text: string, from: string, to: string, keys: string[]) => {
     });
 };
 
-const niu: eF = (text: string, from: string, to: string, keys: string[]) => {
+const niu: eF<string> = (
+    text: string,
+    from: string,
+    to: string,
+    keys: string[],
+) => {
     return new Promise((re: (text: string) => void, rj) => {
         const data = {
             from: from,
@@ -545,7 +585,7 @@ const niu: eF = (text: string, from: string, to: string, keys: string[]) => {
     });
 };
 
-const volcengine: eF = (
+const volcengine: eF<string> = (
     text: string,
     from: string,
     to: string,
@@ -573,7 +613,7 @@ const volcengine: eF = (
     });
 };
 
-const tencentTransmart: eF = (
+const tencentTransmart: eF<string> = (
     text: string,
     from: string,
     to: string,
@@ -610,7 +650,7 @@ const tencentTransmart: eF = (
             .catch(rj);
     });
 };
-const tencent: eF = (
+const tencent: eF<string> = (
     text: string,
     from: string,
     to: string,
@@ -652,29 +692,8 @@ const tencent: eF = (
     });
 };
 
-const engineConfig: {
-    [name in
-        | "youdao"
-        | "baidu"
-        | "deepl"
-        | "deeplx"
-        | "caiyun"
-        | "bing"
-        | "chatgpt"
-        | "gemini"
-        | "niu"
-        | "volcengine"
-        | "tencentTransmart"
-        | "tencent"]: {
-        key: { name: string; text?: string }[];
-        lan: language[number][];
-        targetLang?: language[number][];
-        lan2lan: { [lan in language[number]]?: string };
-        f: eF;
-    };
-} = {
-    youdao: {
-        key: [{ name: "appid" }, { name: "key" }],
+const engineConfig = {
+    youdao: new Translator({
         lan: [
             "auto",
             "zh-Hans",
@@ -796,9 +815,8 @@ const engineConfig: {
             "ko-Kr": "ko",
         },
         f: youdao,
-    },
-    baidu: {
-        key: [{ name: "appid" }, { name: "key" }],
+    }),
+    baidu: new Translator({
         lan: [
             "auto",
             "zh-Hans",
@@ -848,9 +866,8 @@ const engineConfig: {
             vi: "vie",
         },
         f: baidu,
-    },
-    deepl: {
-        key: [{ name: "key" }],
+    }),
+    deepl: new Translator({
         lan: [
             "auto",
             "bg",
@@ -881,7 +898,7 @@ const engineConfig: {
             "uk",
             "zh",
         ],
-        targetLang: [
+        targetLan: [
             "bg",
             "cs",
             "da",
@@ -949,9 +966,8 @@ const engineConfig: {
             zh: "ZH",
         },
         f: deepl,
-    },
-    deeplx: {
-        key: [{ name: "url" }],
+    }),
+    deeplx: new Translator({
         lan: [
             "auto",
             "bg",
@@ -982,7 +998,7 @@ const engineConfig: {
             "uk",
             "zh",
         ],
-        targetLang: [
+        targetLan: [
             "bg",
             "cs",
             "da",
@@ -1050,15 +1066,13 @@ const engineConfig: {
             zh: "ZH",
         },
         f: deeplx,
-    },
-    caiyun: {
-        key: [{ name: "token" }],
+    }),
+    caiyun: new Translator({
         lan: ["auto", "zh", "en", "ja"],
         lan2lan: {},
         f: caiyun,
-    },
-    bing: {
-        key: [{ name: "key" }],
+    }),
+    bing: new Translator({
         lan: [
             "af",
             "am",
@@ -1174,12 +1188,11 @@ const engineConfig: {
         ],
         lan2lan: {},
         f: bing,
-    },
-    chatgpt: {
-        key: [{ name: "key" }, { name: "url" }, { name: "config" }],
+    }),
+    chatgpt: new Translator({
         lan: ["auto"],
         lan2lan: {},
-        targetLang: [
+        targetLan: [
             "af",
             "am",
             "ar",
@@ -1355,12 +1368,11 @@ const engineConfig: {
             "sr",
         ],
         f: chatgpt,
-    },
-    gemini: {
-        key: [{ name: "key" }, { name: "url" }, { name: "config" }],
+    }),
+    gemini: new Translator({
         lan: ["auto"],
         lan2lan: {},
-        targetLang: [
+        targetLan: [
             "af",
             "am",
             "ar",
@@ -1536,9 +1548,8 @@ const engineConfig: {
             "sr",
         ],
         f: gemini,
-    },
-    niu: {
-        key: [{ name: "key" }],
+    }),
+    niu: new Translator({
         lan: [
             "sq",
             "ar",
@@ -1660,9 +1671,8 @@ const engineConfig: {
             // ["acu","agr","ake","amu","ee","ojb","om","os","ifb","aym","knj","ify","acr","amk","bdu","adh","any","cpb","efi","ach","ish","bin","tpi","bsn","ber","bi","bem","pot","br","poh","bam","map","bba","bus","bqp","bnp","bch","bno","bqj","bdh","ptu","bfa","cbl","gbo","bas","bum","pag","bci","bhw","btx","pon","bzj","gug","cha","cv","tn","ts","che","ccp","cdf","tsc","tet","dik","dyu","tbz","mps","tih","duo","ada","dua","tdt","dhv","tiv","djk","enx","nzi","nij","nyn","ndc","ndo","cfm","gur","kea","quw","kg","jy","gub","gof","xsm","krs","guw","swc","gym","me","cnh","hui","hlb","her","quc","gbi","gil","kac","gaa","kik","kmb","cab","kab","cjp","cak","kek","cni","cop","kbh","ckb","ksd","quz","kpg","crh","xal","kbo","keo","cki","pss","kle","qxr","rar","kbp","kam","kqn","wes","rw","rn","ln","lg","dop","rmn","ngl","rug","lsi","ond","loz","lua","lub","lun","rnd","lue","gv","mhr","mam","mo","mni","meu","mah","mrw","mdy","mad","mos","muv","lus","mfe","umb","arn","nhg","azb","quh","lnd","fuv","nop","ntm","nyy","niu","nia","nba","nyu","nav","nyk","pcm","pap","pck","ata","pis","tw","chr","chq","cas","cjk","cce","chk","sr","crs","sg","mrj","jiv","swp","ssx","spy","huv","jmc","srm","sxn","seh","kwy","sop","tzo","tig","tmh","tpm","ctd","tyv","iou","tex","lcm","teo","tvl","tll","tgl","tum","toj","ttj","wal","war","ve","wol","udm","ppk","usp","wlx","prk","wsk","wrs","vun","wls","urh","mau","guc","shi","syc","hwc","hmo","lcp","sid","mbb","shp","ssd","gnw","kyu","hil","jac","ace","jv","ikk","izz","pil","jae","yon","zyb","byr","iso","iba","ilo","ibg","yap","cht","dz","ifa","czt","dtp","bcl","tzh","zne"]
         },
         f: niu,
-    },
-    volcengine: {
-        key: [],
+    }),
+    volcengine: new Translator({
         lan: [
             "auto",
             "zh",
@@ -1784,9 +1794,8 @@ const engineConfig: {
         ],
         lan2lan: {},
         f: volcengine,
-    },
-    tencentTransmart: {
-        key: [],
+    }),
+    tencentTransmart: new Translator({
         lan: [
             "auto",
             "zh",
@@ -1810,9 +1819,8 @@ const engineConfig: {
         ],
         lan2lan: { "zh-Hant": "zh-TW" },
         f: tencentTransmart,
-    },
-    tencent: {
-        key: [],
+    }),
+    tencent: new Translator({
         lan: [
             "auto",
             "zh",
@@ -1836,18 +1844,22 @@ const engineConfig: {
         ],
         lan2lan: { "zh-Hant": "zh-TW" },
         f: tencent,
-    },
+    }),
 };
 
-const e = {} as { [key in keyof typeof engineConfig]: Translator };
-for (const i in engineConfig) {
-    const item = engineConfig[i] as (typeof engineConfig)["bing"];
-    e[i] = new Translator({
-        f: item.f,
-        lan: item.lan,
-        lan2lan: item.lan2lan,
-        targetLan: item.targetLang,
-    });
-}
+const eKey: { [k in keyof typeof engineConfig]: { name: string }[] } = {
+    youdao: [{ name: "appid" }, { name: "key" }],
+    baidu: [{ name: "appid" }, { name: "key" }],
+    deepl: [{ name: "key" }],
+    deeplx: [{ name: "url" }],
+    caiyun: [{ name: "token" }],
+    bing: [{ name: "key" }],
+    chatgpt: [{ name: "key" }, { name: "url" }, { name: "config" }],
+    gemini: [{ name: "key" }, { name: "url" }, { name: "config" }],
+    niu: [{ name: "key" }],
+    volcengine: [],
+    tencentTransmart: [],
+    tencent: [],
+};
 
-export default { Translator, e };
+export default { Translator, e: engineConfig, eKey };
