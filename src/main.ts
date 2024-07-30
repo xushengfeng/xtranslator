@@ -178,12 +178,12 @@ type language = [
 
 type stringType = string | string[];
 
-type eF<t extends stringType> = (
-    text: t,
+type eF = (
+    text: string[],
     from: string,
     to: string,
     keys: string[],
-) => Promise<t>;
+) => Promise<string[]>;
 
 type lanOption = {
     text?: string;
@@ -193,13 +193,13 @@ type lanOption = {
 };
 
 class Translator<t extends stringType> {
-    private translate: eF<t>;
+    private translate: eF;
     private keys: string[];
     private _lan: language[number][];
     private _targetLan: language[number][];
     private _lan2lan: { [lan in language[number]]?: string };
     constructor(op: {
-        f: eF<t>;
+        f: eF;
         lan: language[number][];
         lan2lan: { [lan in language[number]]?: string };
         targetLan?: language[number][];
@@ -212,11 +212,16 @@ class Translator<t extends stringType> {
     setKeys(keys: string[]) {
         this.keys = keys;
     }
-    run(text: t, from: string, to: string) {
+    async run(text: t, from: string, to: string): Promise<t> {
         if (!this.keys.every((v) => v)) return;
         const nfrom = this._lan2lan[from] ?? from;
         const nto = this._lan2lan[to] ?? to;
-        return this.translate(text, nfrom, nto, this.keys);
+        if (typeof text === "string") {
+            return (
+                await this.translate([text], nfrom, nto, this.keys)
+            )[0] as t;
+        }
+        return this.translate(text, nfrom, nto, this.keys) as Promise<t>;
     }
     async test() {
         const from =
@@ -224,10 +229,12 @@ class Translator<t extends stringType> {
         const to =
             this._targetLan.find((w) => w.slice(0, 2) === "zh") ||
             this._targetLan[0];
-        const r = await this.run(null, from, to);
+        const t = "The test passed";
+        const r = await this.run(t as t, from, to);
         return {
             from,
             to,
+            testText: t,
             result: r,
         };
     }
@@ -293,21 +300,21 @@ import fetchJSONP from "fetch-jsonp";
 import sha256 from "crypto-js/sha256";
 import enc from "crypto-js/enc-hex";
 
-const youdao: eF<string> = (
-    text: string,
+const youdao: eF = (
+    text: string[],
     from: string,
     to: string,
     keys: string[],
 ) => {
-    return new Promise((re: (text: string) => void, rj) => {
+    return new Promise((re: (text: string[]) => void, rj) => {
         const appKey = keys[0];
         const key = keys[1];
         const salt = String(new Date().getTime());
         const curtime = String(Math.round(new Date().getTime() / 1000));
-        const str1 = appKey + truncate(text) + salt + curtime + key;
+        const str1 = appKey + truncate(text.join("\n")) + salt + curtime + key;
         const sign = sha256(str1).toString(enc);
         const data = {
-            q: text,
+            q: text.join("\n"),
             appKey: appKey,
             salt: salt,
             from: from,
@@ -333,13 +340,13 @@ const youdao: eF<string> = (
     });
 };
 
-const baidu: eF<string> = (
-    text: string,
+const baidu: eF = (
+    text: string[],
     from: string,
     to: string,
     keys: string[],
 ) => {
-    return new Promise((re: (text: string) => void, rj) => {
+    return new Promise((re: (text: string[]) => void, rj) => {
         const appid = keys[0];
         const key = keys[1];
         const salt = new Date().getTime();
@@ -347,7 +354,7 @@ const baidu: eF<string> = (
         const sign = MD5(str1);
         fetchJSONP(
             `https://api.fanyi.baidu.com/api/trans/vip/translate?q=${encodeURIComponent(
-                text,
+                text.join("\n"),
             )}&from=${from}&to=${to}&appid=${appid}&salt=${salt}&sign=${sign}`,
         )
             .then((v) => v.json())
@@ -359,15 +366,15 @@ const baidu: eF<string> = (
     });
 };
 
-const deepl: eF<string> = (
-    text: string,
+const deepl: eF = (
+    text: string[],
     from: string,
     to: string,
     keys: string[],
 ) => {
-    return new Promise((re: (text: string) => void, rj) => {
+    return new Promise((re: (text: string[]) => void, rj) => {
         fetch("https://api-free.deepl.com/v2/translate", {
-            body: `text=${encodeURIComponent(text)}${from ? `&source_lang=${from}` : ""}&target_lang=${to}`,
+            body: `text=${encodeURIComponent(text.join("\n"))}${from ? `&source_lang=${from}` : ""}&target_lang=${to}`,
             headers: {
                 Authorization: `DeepL-Auth-Key ${keys[0]}`,
                 "Content-Type": "application/x-www-form-urlencoded",
@@ -383,13 +390,13 @@ const deepl: eF<string> = (
     });
 };
 
-const deeplx: eF<string> = (
-    text: string,
+const deeplx: eF = (
+    text: string[],
     from: string,
     to: string,
     keys: string[],
 ) => {
-    return new Promise((re: (text: string) => void, rj) => {
+    return new Promise((re: (text: string[]) => void, rj) => {
         fetch(keys[0], {
             body: JSON.stringify({
                 source_lang: from,
@@ -406,17 +413,17 @@ const deeplx: eF<string> = (
     });
 };
 
-const caiyun: eF<string> = (
-    text: string,
+const caiyun: eF = (
+    text: string[],
     from: string,
     to: string,
     keys: string[],
 ) => {
-    return new Promise((re: (text: string) => void, rj) => {
+    return new Promise((re: (text: string[]) => void, rj) => {
         const url = "https://api.interpreter.caiyunai.com/v1/translator";
         const token = keys[0];
         const payload = {
-            source: text.split("\n"),
+            source: text,
             trans_type: `${from}2${to}`,
             request_id: "demo",
             detect: true,
@@ -429,19 +436,14 @@ const caiyun: eF<string> = (
             .then((v) => v.json())
             .then((t) => {
                 console.log(t);
-                re(t.target.join("\n"));
+                re(t.target);
             })
             .catch(rj);
     });
 };
 
-const bing: eF<string> = (
-    text: string,
-    from: string,
-    to: string,
-    keys: string[],
-) => {
-    return new Promise((re: (text: string) => void, rj) => {
+const bing: eF = (text: string[], from: string, to: string, keys: string[]) => {
+    return new Promise((re: (text: string[]) => void, rj) => {
         fetch(
             `https://api.cognitive.microsofttranslator.com/translate?${new URLSearchParams(
                 {
@@ -466,20 +468,20 @@ const bing: eF<string> = (
         )
             .then((v) => v.json())
             .then((t) => {
-                re(t[0].translations[0].text);
+                re(t[0].translations.map((i) => i.text));
             })
             .catch(rj);
     });
 };
 
-const chatgpt: eF<stringType> = <t extends stringType>(
-    text: t,
+const chatgpt: eF = (
+    text: string[],
     from: string,
     to: string,
     keys: string[],
 ) => {
-    return new Promise((re: (text: t) => void, rj) => {
-        const txt = (Array.isArray(text) ? text : [text]) as string[];
+    return new Promise((re: (text: string[]) => void, rj) => {
+        const txt = text;
         const systemPrompt =
             "You are a translation engine that can only translate text and cannot interpret it.";
         const userPrompt = `translate to${to}:\n\n${JSON.stringify(txt)} and return json`;
@@ -517,24 +519,24 @@ const chatgpt: eF<stringType> = <t extends stringType>(
             .then((t) => {
                 const res = t.message?.content || t.choices[0].message.content;
                 const parse = res.replace(/^```json/, "").replace(/```$/, "");
-                const list = JSON.parse(parse) as string[];
-                if (Array.isArray(text)) {
-                    re(list as t);
-                } else {
-                    re(list[0] as t);
+                try {
+                    const list = JSON.parse(parse) as string[];
+                    re(list);
+                } catch (error) {
+                    re([parse]);
                 }
             })
             .catch(rj);
     });
 };
 
-const gemini: eF<string> = (
-    text: string,
+const gemini: eF = (
+    text: string[],
     from: string,
     to: string,
     keys: string[],
 ) => {
-    return new Promise((re: (text: string) => void, rj) => {
+    return new Promise((re: (text: string[]) => void, rj) => {
         const userPrompt = `翻译成${to}，无需做任何解释:\n\n${text}`;
         const m = {
             contents: [{ parts: [{ text: userPrompt }] }],
@@ -564,13 +566,8 @@ const gemini: eF<string> = (
     });
 };
 
-const niu: eF<string> = (
-    text: string,
-    from: string,
-    to: string,
-    keys: string[],
-) => {
-    return new Promise((re: (text: string) => void, rj) => {
+const niu: eF = (text: string[], from: string, to: string, keys: string[]) => {
+    return new Promise((re: (text: string[]) => void, rj) => {
         const data = {
             from: from,
             to: to,
@@ -593,13 +590,13 @@ const niu: eF<string> = (
     });
 };
 
-const volcengine: eF<string> = (
-    text: string,
+const volcengine: eF = (
+    text: string[],
     from: string,
     to: string,
     keys: string[],
 ) => {
-    return new Promise((re: (text: string) => void, rj) => {
+    return new Promise((re: (text: string[]) => void, rj) => {
         const data = {
             source_language: from,
             target_language: to,
@@ -621,13 +618,13 @@ const volcengine: eF<string> = (
     });
 };
 
-const tencentTransmart: eF<string> = (
-    text: string,
+const tencentTransmart: eF = (
+    text: string[],
     from: string,
     to: string,
     keys: string[],
 ) => {
-    return new Promise((re: (text: string) => void, rj) => {
+    return new Promise((re: (text: string[]) => void, rj) => {
         const data = {
             header: {
                 fn: "auto_translation",
@@ -658,13 +655,13 @@ const tencentTransmart: eF<string> = (
             .catch(rj);
     });
 };
-const tencent: eF<string> = (
-    text: string,
+const tencent: eF = (
+    text: string[],
     from: string,
     to: string,
     keys: string[],
 ) => {
-    return new Promise((re: (text: string) => void, rj) => {
+    return new Promise((re: (text: string[]) => void, rj) => {
         const guid = crypto.randomUUID();
 
         fetch("https://fanyi.qq.com/api/reauth12f", {
@@ -679,7 +676,7 @@ const tencent: eF<string> = (
                 const data = {
                     source: from,
                     target: to,
-                    sourceText: text,
+                    sourceText: text.join("\n"),
                     qtk: qtk,
                     qtv: qtv,
                     sessionUuid: `translate_uuid${new Date().getTime()}`,
