@@ -495,7 +495,7 @@ const chatgpt = (
     keys: {
         key: string;
         url: string;
-        config?: { model?: string; [k: string]: unknown };
+        config?: { model: string; [k: string]: unknown };
     },
 ) => {
     return new Promise((re: (text: string[]) => void, rj) => {
