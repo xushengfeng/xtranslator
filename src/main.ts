@@ -499,7 +499,7 @@ const chatgpt = (
         const txt = text;
         const systemPrompt =
             "You are a translation engine that can only translate text and cannot interpret it.";
-        const userPrompt = `translate to${to}:\n\n${JSON.stringify(txt)} and return json`;
+        const userPrompt = `translate to ${to}:\n\n${JSON.stringify(txt)} and return json`;
         const m = [
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },
