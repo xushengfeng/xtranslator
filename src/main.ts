@@ -216,10 +216,7 @@ class Translator<
         this._lan2lan = op.lan2lan;
     }
     setKeys(keys: k) {
-        for (const i in keys) {
-            const v = keys[i];
-            this.keys[i] = v;
-        }
+        this.keys = structuredClone(keys);
         return keys;
     }
     async run<tt extends t>(text: tt, from: string, to: string): Promise<tt> {
