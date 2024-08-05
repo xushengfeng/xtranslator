@@ -367,7 +367,7 @@ const baidu = (
             .then((v) => v.json())
             .then((t) => {
                 const l = t.trans_result.map((v) => v.dst);
-                re(l.join("\n"));
+                re(l);
             })
             .catch(rj);
     });
