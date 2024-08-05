@@ -535,8 +535,14 @@ const chatgpt = (
                 const res = t.message?.content || t.choices[0].message.content;
                 const parse = res.replace(/^```json/, "").replace(/```$/, "");
                 try {
-                    const list = JSON.parse(parse) as string[];
-                    re(list);
+                    const list = JSON.parse(parse) as
+                        | string[]
+                        | { [k: string]: string[] };
+                    if (Array.isArray(list)) {
+                        re(list);
+                    } else {
+                        re(Object.values(list).flat());
+                    }
                 } catch (error) {
                     re([parse]);
                 }
