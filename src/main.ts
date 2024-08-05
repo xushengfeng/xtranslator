@@ -223,9 +223,9 @@ class Translator<
         const nfrom = this._lan2lan[from] ?? from;
         const nto = this._lan2lan[to] ?? to;
         if (typeof text === "string") {
-            return (
-                await this.translate([text], nfrom, nto, this.keys)
-            )[0] as tt;
+            return (await this.translate([text], nfrom, nto, this.keys)).join(
+                "\n",
+            ) as tt;
         }
         return this.translate(text, nfrom, nto, this.keys) as Promise<tt>;
     }
