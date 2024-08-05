@@ -492,6 +492,19 @@ const bing = (
     });
 };
 
+function parseJson(res: string) {
+    const parse = res.replace(/^```json/, "").replace(/```$/, "");
+    try {
+        const list = JSON.parse(parse) as string[] | { [k: string]: string[] };
+        if (Array.isArray(list)) {
+            return list;
+        }
+        return Object.values(list).flat();
+    } catch (error) {
+        return [parse];
+    }
+}
+
 const chatgpt = (
     text: string[],
     from: string,
@@ -540,19 +553,7 @@ const chatgpt = (
             .then((v) => v.json())
             .then((t) => {
                 const res = t.message?.content || t.choices[0].message.content;
-                const parse = res.replace(/^```json/, "").replace(/```$/, "");
-                try {
-                    const list = JSON.parse(parse) as
-                        | string[]
-                        | { [k: string]: string[] };
-                    if (Array.isArray(list)) {
-                        re(list);
-                    } else {
-                        re(Object.values(list).flat());
-                    }
-                } catch (error) {
-                    re([parse]);
-                }
+                re(parseJson(res));
             })
             .catch(rj);
     });
@@ -565,7 +566,7 @@ const gemini = (
     keys: { key: string; url: string; config?: string },
 ) => {
     return new Promise((re: (text: string[]) => void, rj) => {
-        const userPrompt = `翻译成${to}，无需做任何解释:\n\n${text}`;
+        const userPrompt = `翻译成${to}，无需做任何解释:\n\n${JSON.stringify(text)}，并返回JSON格式string[]`;
         const m = {
             contents: [{ parts: [{ text: userPrompt }] }],
         };
@@ -588,7 +589,8 @@ const gemini = (
         })
             .then((v) => v.json())
             .then((t) => {
-                re(t.candidates[0].content.parts[0].text);
+                const res = t.candidates[0].content.parts[0].text;
+                re(parseJson(res));
             })
             .catch(rj);
     });
