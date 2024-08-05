@@ -667,7 +667,7 @@ const tencentTransmart = (
             text_domain: "general",
             source: {
                 lang: from,
-                text_list: [text],
+                text_list: text,
             },
             target: {
                 lang: to,
@@ -683,7 +683,7 @@ const tencentTransmart = (
         })
             .then((response) => response.json())
             .then((result) => {
-                re(result.auto_translation[0]);
+                re(result.auto_translation);
             })
             .catch(rj);
     });
