@@ -317,10 +317,9 @@ const youdao = (
         const key = keys.key;
         const salt = String(new Date().getTime());
         const curtime = String(Math.round(new Date().getTime() / 1000));
-        const str1 = appKey + truncate(text.join("\n")) + salt + curtime + key;
+        const str1 = appKey + truncate(text.join("")) + salt + curtime + key;
         const sign = sha256(str1).toString(enc);
         const data = {
-            q: text.join("\n"),
             appKey: appKey,
             salt: salt,
             from: from,
@@ -329,12 +328,14 @@ const youdao = (
             signType: "v3",
             curtime: curtime,
         };
-        fetchJSONP(
-            `https://openapi.youdao.com/api?${new URLSearchParams(data).toString()}`,
-        )
+        const params = new URLSearchParams(data);
+        for (const t of text) {
+            params.append("q", t);
+        }
+        fetchJSONP(`https://openapi.youdao.com/api?${params.toString()}`)
             .then((v) => v.json())
             .then((t) => {
-                re(t.translation.join("\n"));
+                re(t.translateResults.map((i) => i.translation));
             })
             .catch(rj);
 
