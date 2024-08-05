@@ -12,7 +12,7 @@ npm i xtranslator
 
 ```js
 import xtranslator from "xtranslator";
-xtranslator.e.chatgpt.setKeys(["key"]);
+xtranslator.e.chatgpt.setKeys({ key: "" });
 console.log(xtranslator.e.chatgpt.run("hi", "auto", "zh"));
 ```
 
