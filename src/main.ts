@@ -381,7 +381,11 @@ const deepl = (
 ) => {
     return new Promise((re: (text: string[]) => void, rj) => {
         fetch("https://api-free.deepl.com/v2/translate", {
-            body: `text=${encodeURIComponent(text.join("\n"))}${from ? `&source_lang=${from}` : ""}&target_lang=${to}`,
+            body: JSON.stringify({
+                text: text,
+                source_lang: from,
+                target_lang: to,
+            }),
             headers: {
                 Authorization: `DeepL-Auth-Key ${keys.key}`,
                 "Content-Type": "application/x-www-form-urlencoded",
@@ -391,7 +395,7 @@ const deepl = (
             .then((v) => v.json())
             .then((t) => {
                 const l = t.translations.map((x) => x.text);
-                re(l.join("\n"));
+                re(l);
             })
             .catch(rj);
     });
@@ -414,7 +418,9 @@ const deeplx = (
         })
             .then((v) => v.json())
             .then((t) => {
-                re(t.data);
+                if (t.translations) {
+                    re(t.translations.map((x) => x.text));
+                } else re(t.data);
             })
             .catch(rj);
     });
