@@ -605,7 +605,7 @@ const niu = (
             from: from,
             to: to,
             apikey: keys.key,
-            src_text: text,
+            src_text: text.join("\n"),
         };
 
         fetch("https://api.niutrans.com/NiuTransServer/translation", {
@@ -617,7 +617,7 @@ const niu = (
         })
             .then((response) => response.json())
             .then((result) => {
-                re(result.tgt_text);
+                re(result.tgt_text.split("\n"));
             })
             .catch(rj);
     });
