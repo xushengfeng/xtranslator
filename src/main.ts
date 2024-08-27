@@ -505,6 +505,13 @@ function parseJson(res: string) {
     }
 }
 
+function buildPrompt(p: string, text: string[], from = "auto", to = "auto") {
+    return p
+        .replaceAll("$t", JSON.stringify(text))
+        .replaceAll("$from", from)
+        .replaceAll("$to", to);
+}
+
 const chatgpt = (
     text: string[],
     from: string,
@@ -513,13 +520,25 @@ const chatgpt = (
         key: string;
         url: string;
         config?: { model: string; [k: string]: unknown };
+        sysPrompt?: string;
+        userPrompt?: string;
     },
 ) => {
     return new Promise((re: (text: string[]) => void, rj) => {
         const txt = text;
-        const systemPrompt =
-            "You are a translation engine that can only translate text and cannot interpret it.";
-        const userPrompt = `translate to ${to}:\n\n${JSON.stringify(txt)} and return json`;
+        const systemPrompt = buildPrompt(
+            keys.sysPrompt ||
+                "You are a translation engine that can only translate text and cannot interpret it.",
+            txt,
+            from,
+            to,
+        );
+        const userPrompt = buildPrompt(
+            keys.userPrompt || "translate to $to:\n\n$t and return json",
+            txt,
+            from,
+            to,
+        );
         const m = [
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },
@@ -563,10 +582,16 @@ const gemini = (
     text: string[],
     from: string,
     to: string,
-    keys: { key: string; url: string; config?: string },
+    keys: { key: string; url: string; config?: string; userPrompt?: string },
 ) => {
     return new Promise((re: (text: string[]) => void, rj) => {
-        const userPrompt = `翻译成${to}，无需做任何解释:\n\n${JSON.stringify(text)}，并返回JSON格式string[]`;
+        const userPrompt = buildPrompt(
+            keys.userPrompt ||
+                "翻译成$to，无需做任何解释:\n\n$t，并返回JSON格式string[]",
+            text,
+            from,
+            to,
+        );
         const m = {
             contents: [{ parts: [{ text: userPrompt }] }],
         };
@@ -1899,8 +1924,19 @@ const eKey: {
     deeplx: [{ name: "url" }],
     caiyun: [{ name: "token" }],
     bing: [{ name: "key" }],
-    chatgpt: [{ name: "key" }, { name: "url" }, { name: "config" }],
-    gemini: [{ name: "key" }, { name: "url" }, { name: "config" }],
+    chatgpt: [
+        { name: "key" },
+        { name: "url" },
+        { name: "config" },
+        { name: "sysPrompt" },
+        { name: "userPrompt" },
+    ],
+    gemini: [
+        { name: "key" },
+        { name: "url" },
+        { name: "config" },
+        { name: "userPrompt" },
+    ],
     niu: [{ name: "key" }],
     volcengine: [],
     tencentTransmart: [],
