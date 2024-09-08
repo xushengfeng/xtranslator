@@ -493,7 +493,13 @@ const bing = (
 };
 
 function parseJson(res: string) {
-    const parse = res.replace(/^```json/, "").replace(/```$/, "");
+    let parse = res;
+    if (res.includes("```")) {
+        const l = res.split("\n");
+        const start = l.findIndex((i) => i.includes("```"));
+        const end = l.findLastIndex((i) => i.includes("```"));
+        parse = l.slice(start + 1, end).join("\n");
+    }
     try {
         const list = JSON.parse(parse) as string[] | { [k: string]: string[] };
         if (Array.isArray(list)) {
