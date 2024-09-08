@@ -507,9 +507,9 @@ function parseJson(res: string) {
 
 function buildPrompt(p: string, text: string[], from = "auto", to = "auto") {
     return p
-        .replaceAll("$t", JSON.stringify(text))
-        .replaceAll("$from", from)
-        .replaceAll("$to", to);
+        .replaceAll("${t}", JSON.stringify(text))
+        .replaceAll("${from}", from)
+        .replaceAll("${to}", to);
 }
 
 const chatgpt = (
@@ -534,7 +534,7 @@ const chatgpt = (
             to,
         );
         const userPrompt = buildPrompt(
-            keys.userPrompt || "translate to $to:\n\n$t and return json",
+            keys.userPrompt || "translate to ${to}:\n\n${t} and return json",
             txt,
             from,
             to,
@@ -587,7 +587,7 @@ const gemini = (
     return new Promise((re: (text: string[]) => void, rj) => {
         const userPrompt = buildPrompt(
             keys.userPrompt ||
-                "翻译成$to，无需做任何解释:\n\n$t，并返回JSON格式string[]",
+                "翻译成${to}，无需做任何解释:\n\n${t}，并返回JSON格式string[]",
             text,
             from,
             to,
