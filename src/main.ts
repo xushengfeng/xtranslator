@@ -534,20 +534,26 @@ const chatgpt = (
         const txt = text;
         const systemPrompt = buildPrompt(
             keys.sysPrompt ||
-                "You are a translation engine that can only translate text and cannot interpret it.",
+                "You are a translation engine that can only translate text to JSON format and cannot interpret it.",
             txt,
             from,
             to,
         );
-        const userPrompt = buildPrompt(
-            keys.userPrompt || "translate to ${to}:\n\n${t} and return json",
-            txt,
-            from,
-            to,
+        const userPrompt =
+            keys.userPrompt ||
+            '{"from": "${from}", "to": "${to}", "text": ${t}}';
+        const inputPrompt = buildPrompt(userPrompt, txt, from, to);
+        const example = buildPrompt(
+            userPrompt,
+            ["hello world", "goodbye"],
+            "en",
+            "zh-HANS",
         );
         const m = [
             { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt },
+            { role: "user", content: example },
+            { role: "assistant", content: '["你好世界","再见"]' },
+            { role: "user", content: inputPrompt },
         ];
         const config = {
             model: "gpt-4o-mini",
