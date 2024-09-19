@@ -340,11 +340,16 @@ class Translator<
         const nfrom = this._lan2lan[from] ?? from;
         const nto = this._lan2lan[to] ?? to;
         if (typeof text === "string") {
-            return (await this.translate([text], nfrom, nto, this.keys)).join(
-                "\n",
-            ) as tt;
+            return (
+                (await this.translate([text], nfrom, nto, this.keys)) || []
+            ).join("\n") as tt;
         }
-        return this.translate(text, nfrom, nto, this.keys) as Promise<tt>;
+        const list = (await this.translate(text, nfrom, nto, this.keys)) || [];
+        const r: string[] = new Array(text.length).fill("");
+        for (const i in r) {
+            if (list[i]) r[i] = list[i];
+        }
+        return r as tt;
     }
     async test() {
         const from =
@@ -921,8 +926,7 @@ const google = (
                     result[0]
                         ?.map((i) => i[0])
                         .filter((i) => i !== null)
-                        .map((i) => i.trim()) ||
-                        new Array(text.length).fill(""),
+                        .map((i) => i.trim()),
                 );
             })
             .catch(rj);
@@ -961,7 +965,7 @@ const yandex = (
         })
             .then((response) => response.json())
             .then((result) => {
-                re(result.text || new Array(text.length).fill(""));
+                re(result.text);
             })
             .catch(rj);
     });
