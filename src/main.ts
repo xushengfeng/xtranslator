@@ -929,6 +929,44 @@ const google = (
     });
 };
 
+const yandex = (
+    text: string[],
+    from: string,
+    to: string,
+    keys: Record<string, never>,
+) => {
+    return new Promise((re: (text: string[]) => void, rj) => {
+        const url = new URL(
+            "https://translate.yandex.net/api/v1/tr.json/translate",
+        );
+        url.searchParams.append("srv", "android");
+        url.searchParams.append(
+            "id",
+            `${crypto.randomUUID().replaceAll("-", "")}-0-0`,
+        );
+
+        const data = new URLSearchParams();
+        data.append("source_lang", from);
+        data.append("target_lang", to);
+        for (const i of text) {
+            data.append("text", i);
+        }
+
+        fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: data,
+        })
+            .then((response) => response.json())
+            .then((result) => {
+                re(result.text || new Array(text.length).fill(""));
+            })
+            .catch(rj);
+    });
+};
+
 const engineConfig = {
     youdao: new Translator({
         lan: [
@@ -1984,6 +2022,39 @@ const engineConfig = {
         lan2lan: {},
         f: google,
     }),
+    yandex: new Translator({
+        lan: [
+            "auto",
+            "zh",
+            "en",
+            "ja",
+            "ko",
+            "fr",
+            "es",
+            "ru",
+            "de",
+            "it",
+            "tr",
+            "pt",
+            "vi",
+            "id",
+            "th",
+            "ms",
+            "ar",
+            "hi",
+            "no",
+            "fa",
+            "sv",
+            "pl",
+            "nl",
+            "uk",
+            "he",
+        ],
+        lan2lan: {
+            auto: "",
+        },
+        f: yandex,
+    }),
 };
 
 const eKey: {
@@ -2016,6 +2087,7 @@ const eKey: {
     tencentTransmart: [],
     tencent: [],
     google: [],
+    yandex: [],
 };
 
 export default {

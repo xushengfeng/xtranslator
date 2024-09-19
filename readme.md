@@ -37,4 +37,4 @@ console.log(await xtranslator.e.chatgpt.run(["what can i say", "see you again"],
 -   [x] 腾讯
 -   [x] 火山
 -   [x] 谷歌（免费）
--   [ ] Yandex
+-   [x] Yandex（免费）
