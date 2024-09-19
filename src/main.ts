@@ -822,10 +822,13 @@ const tencentTransmart = (
         const data = {
             header: {
                 fn: "auto_translation",
+                session: "",
+                client_key: `browser-firefox-130.0.0-Linux-${crypto.randomUUID()}-${new Date().getTime().toString()}`,
+                user: "",
             },
             type: "plain",
             model_category: "normal",
-            text_domain: "general",
+            text_domain: "",
             source: {
                 lang: from,
                 text_list: text,
