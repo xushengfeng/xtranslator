@@ -769,6 +769,49 @@ const tencent = (
     });
 };
 
+const google = (
+    text: string[],
+    from: string,
+    to: string,
+    keys: Record<string, never>,
+) => {
+    return new Promise((re: (text: string[]) => void, rj) => {
+        const url = new URL(
+            "https://translate.google.com/translate_a/single?dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&dt=t",
+        );
+        url.searchParams.append("client", "gtx");
+        url.searchParams.append("sl", from);
+        url.searchParams.append("tl", to);
+        url.searchParams.append("hl", to);
+        url.searchParams.append("dt", "t");
+        url.searchParams.append("ie", "UTF-8");
+        url.searchParams.append("oe", "UTF-8");
+        url.searchParams.append("otf", "1");
+        url.searchParams.append("ssel", "0");
+        url.searchParams.append("tsel", "0");
+        url.searchParams.append("kc", "7");
+        url.searchParams.append("q", text.join("\n"));
+
+        fetch(url, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        })
+            .then((response) => response.json())
+            .then((result) => {
+                re(
+                    result[0]
+                        ?.map((i) => i[0])
+                        .filter((i) => i !== null)
+                        .map((i) => i.trim()) ||
+                        new Array(text.length).fill(""),
+                );
+            })
+            .catch(rj);
+    });
+};
+
 const engineConfig = {
     youdao: new Translator({
         lan: [
@@ -1922,6 +1965,11 @@ const engineConfig = {
         lan2lan: { "zh-Hant": "zh-TW" },
         f: tencent,
     }),
+    google: new Translator({
+        lan: ["auto", "zh", "zh-Hant", "en"], // todo 244 more langs
+        lan2lan: {},
+        f: google,
+    }),
 };
 
 const eKey: {
@@ -1953,6 +2001,7 @@ const eKey: {
     volcengine: [],
     tencentTransmart: [],
     tencent: [],
+    google: [],
 };
 
 export default { Translator, e: engineConfig, eKey };
