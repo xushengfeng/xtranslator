@@ -305,10 +305,11 @@ type lanOption = {
 class Translator<
     t extends string | string[],
     k extends { [name: string]: unknown },
+    l extends language[number],
 > {
     private translate: eF;
     private keys: { [name: string]: unknown };
-    private _lan: language[number][];
+    private _lan: l[];
     private _targetLan: language[number][];
     private _lan2lan: { [lan in language[number]]?: string };
     constructor(op: {
@@ -318,20 +319,24 @@ class Translator<
             to: string,
             keys: k,
         ) => Promise<string[]>;
-        lan: language[number][];
+        lan: l[];
         lan2lan: { [lan in language[number]]?: string };
         targetLan?: language[number][];
     }) {
         this.translate = op.f;
         this._lan = op.lan;
-        this._targetLan = op.targetLan ?? op.lan;
-        this._lan2lan = op.lan2lan;
+        this._targetLan = op.targetLan ?? op.lan.filter((i) => i !== "auto");
+        this._lan2lan = op.lan2lan ?? {};
     }
     setKeys(keys: k) {
         this.keys = structuredClone(keys);
         return keys;
     }
-    async run<tt extends t>(text: tt, from: string, to: string): Promise<tt> {
+    async run<tt extends t, ll extends l>(
+        text: tt,
+        from: ll,
+        to: language[number],
+    ): Promise<tt> {
         const nfrom = this._lan2lan[from] ?? from;
         const nto = this._lan2lan[to] ?? to;
         if (typeof text === "string") {
