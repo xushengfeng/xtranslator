@@ -340,10 +340,12 @@ class Translator<
         const nfrom = this._lan2lan[from] ?? from;
         const nto = this._lan2lan[to] ?? to;
         if (typeof text === "string") {
+            if (text.trim() === "") return "" as tt;
             return (
                 (await this.translate([text], nfrom, nto, this.keys)) || []
             ).join("\n") as tt;
         }
+        if (text.length === 0) return [] as tt;
         const list = (await this.translate(text, nfrom, nto, this.keys)) || [];
         const r: string[] = new Array(text.length).fill("");
         for (const i in r) {
