@@ -896,47 +896,69 @@ const tencent = (
     });
 };
 
-const google = (
+const google = async (
     text: string[],
     from: string,
     to: string,
     keys: Record<string, never>,
 ) => {
-    return new Promise((re: (text: string[]) => void, rj) => {
-        const url = new URL(
-            "https://translate.google.com/translate_a/single?dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&dt=t",
-        );
-        url.searchParams.append("client", "gtx");
-        url.searchParams.append("sl", from);
-        url.searchParams.append("tl", to);
-        url.searchParams.append("hl", to);
-        url.searchParams.append("dt", "t");
-        url.searchParams.append("ie", "UTF-8");
-        url.searchParams.append("oe", "UTF-8");
-        url.searchParams.append("otf", "1");
-        url.searchParams.append("ssel", "0");
-        url.searchParams.append("tsel", "0");
-        url.searchParams.append("kc", "7");
-        url.searchParams.append("q", text.join("\n"));
+    const { promise, resolve, reject } = Promise.withResolvers<string[]>();
+    const url = new URL(
+        "https://translate.google.com/translate_a/single?dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&dt=t",
+    );
+    url.searchParams.append("client", "gtx");
+    url.searchParams.append("sl", from);
+    url.searchParams.append("tl", to);
+    url.searchParams.append("hl", to);
+    url.searchParams.append("dt", "t");
+    url.searchParams.append("ie", "UTF-8");
+    url.searchParams.append("oe", "UTF-8");
+    url.searchParams.append("otf", "1");
+    url.searchParams.append("ssel", "0");
+    url.searchParams.append("tsel", "0");
+    url.searchParams.append("kc", "7");
+    url.searchParams.append("q", text.map((i) => i.trim()).join("\n"));
 
-        fetch(url, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        })
-            .then((response) => response.json())
-            .then((result) => {
-                re(
-                    result[0]
-                        ?.map((i) => i[0])
-                        .filter((i) => i !== null)
-                        .map((i) => i.trim()),
-                );
+    try {
+        const r = await (
+            await fetch(url, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                },
             })
-            .catch(rj);
-    });
+        ).json();
+        const x: string[][] = [];
+        const matchL: [string, string] = r[0]
+            ?.map((i) => [i[0], i[1]])
+            .filter((i) => i[0] !== null);
+        const nT = structuredClone(text);
+        let startI = 0;
+        for (const i of matchL) {
+            const tIndex =
+                nT.slice(startI).findIndex((t) => matchSen(t, i[1]) > 0.8) +
+                startI;
+            startI = Math.max(tIndex, 0);
+            x[startI] = x[startI] || [];
+            x[startI].push(i[0]);
+        }
+        resolve(x.map((i) => i.join("")));
+    } catch (error) {
+        reject(error);
+    }
+
+    return promise;
 };
+
+function matchSen(s1: string, s2: string) {
+    let s = s1;
+    const chunkSize = 5;
+    for (let i = 0; i < s2.length; i += chunkSize) {
+        const t = s2.slice(i, i + chunkSize);
+        s = s.replace(t, "");
+    }
+    return (s1.length - s.length) / s2.length;
+}
 
 const yandex = (
     text: string[],
