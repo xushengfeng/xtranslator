@@ -2156,5 +2156,6 @@ export default {
         inIntl: languagesInIntl,
         notInIntl: languagesNotInIntl,
     },
-    matchFitLan,
 };
+
+export { matchFitLan };

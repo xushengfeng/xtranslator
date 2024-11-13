@@ -1,7 +1,5 @@
 import { expect, test } from "vitest";
-import xtranslators from "../src/main";
-
-const matchFitLan = xtranslators.matchFitLan;
+import { matchFitLan } from "../src/main";
 
 const lans = ["zh", "zh-Hans", "en"];
 
