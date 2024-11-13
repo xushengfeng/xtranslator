@@ -167,8 +167,6 @@ const languagesInIntl = [
     "zh",
     "zh-Hans",
     "zh-Hant",
-    "zh-Hant-hk",
-    "zh-Hant-tw",
     "zu",
 ] as const;
 
@@ -1645,8 +1643,6 @@ const engineConfig0 = {
                 "auto",
                 "zh",
                 "zh-Hant",
-                "zh-Hant-hk",
-                "zh-Hant-tw",
                 "tn",
                 "vi",
                 "iu",
