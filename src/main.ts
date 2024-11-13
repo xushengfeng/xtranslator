@@ -293,13 +293,6 @@ type eF = (
     keys: { [name: string]: unknown },
 ) => Promise<string[]>;
 
-type lanOption = {
-    text?: string;
-    auto?: string;
-    sort?: "src" | "text";
-    firstLan?: string;
-};
-
 class Translator<
     t extends string | string[],
     k extends { [name: string]: unknown },
