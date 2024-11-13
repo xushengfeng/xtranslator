@@ -393,13 +393,13 @@ class Translator<
 
 function matchFitLan(
     srcLan: string,
-    lans: language[number][],
+    lans: string[],
     op: { strict?: boolean; transferRegion?: boolean } = {
         strict: false,
         transferRegion: true,
     },
 ) {
-    const map = new Map<string, language[number]>();
+    const map = new Map<string, string>();
     for (const l of lans) {
         map.set(l.toLowerCase(), l);
     }
@@ -413,7 +413,8 @@ function matchFitLan(
           }
         : {};
     const supportLan = Array.from(map.keys().map((i) => i));
-    const lan = region2script[srcLan] ?? srcLan;
+    const srcLan2 = srcLan.toLowerCase();
+    const lan = region2script[srcLan2] ?? srcLan2;
     const mainLan = lan.split("-")[0];
     const filterLans = supportLan.filter(
         (i) => i.startsWith(`${mainLan}-`) || i === mainLan,
@@ -2162,5 +2163,5 @@ export default {
         inIntl: languagesInIntl,
         notInIntl: languagesNotInIntl,
     },
-    matchLan: matchFitLan,
+    matchFitLan,
 };
