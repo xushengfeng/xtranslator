@@ -334,9 +334,23 @@ class Translator<
         text: tt,
         from: ll,
         to: language[number],
+        op?: { strictMatch?: boolean },
     ): Promise<tt> {
-        const nfrom = this._lan2lan[from] ?? from;
-        const nto = this._lan2lan[to] ?? to;
+        const matchFrom = matchFitLan(from, this._lan, {
+            strict: op?.strictMatch ?? false,
+        });
+        const matchTo = matchFitLan(to, this._targetLan, {
+            strict: op?.strictMatch ?? false,
+        });
+        if (!matchFrom) {
+            throw new Error(`Unsupported source language ${from}`);
+        }
+        if (!matchTo) {
+            throw new Error(`Unsupported target language ${to}`);
+        }
+        const nfrom = this._lan2lan[matchFrom] ?? matchFrom;
+        const nto = this._lan2lan[matchTo] ?? matchTo;
+
         if (typeof text === "string") {
             if (text.trim() === "") return "" as tt;
             return (
@@ -375,6 +389,40 @@ class Translator<
     get lan2lan() {
         return this._lan2lan;
     }
+}
+
+function matchFitLan(
+    srcLan: string,
+    lans: language[number][],
+    op: { strict?: boolean; transferRegion?: boolean } = {
+        strict: false,
+        transferRegion: true,
+    },
+) {
+    const map = new Map<string, language[number]>();
+    for (const l of lans) {
+        map.set(l.toLowerCase(), l);
+    }
+
+    const region2script = op.transferRegion
+        ? {
+              "zh-cn": "zh-hans",
+              "zh-sg": "zh-hans",
+              "zh-tw": "zh-hant",
+              "zh-hk": "zh-hant",
+          }
+        : {};
+    const supportLan = Array.from(map.keys().map((i) => i));
+    const lan = region2script[srcLan] ?? srcLan;
+    const mainLan = lan.split("-")[0];
+    const filterLans = supportLan.filter(
+        (i) => i.startsWith(`${mainLan}-`) || i === mainLan,
+    );
+    if (filterLans.length === 0) return undefined;
+    if (filterLans.includes(lan)) return map.get(lan);
+    if (op.strict) return undefined;
+    if (filterLans.includes(mainLan)) return map.get(mainLan); // zh-unkown -> zh
+    return map.get(filterLans.filter((i) => i !== mainLan)[0]); // zh-unkown -> zh-hans
 }
 
 import MD5 from "blueimp-md5";
@@ -2114,4 +2162,5 @@ export default {
         inIntl: languagesInIntl,
         notInIntl: languagesNotInIntl,
     },
+    matchLan: matchFitLan,
 };
