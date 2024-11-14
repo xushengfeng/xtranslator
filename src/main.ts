@@ -336,10 +336,10 @@ class Translator<
             strict: op?.strictMatch ?? false,
         });
         if (!matchFrom) {
-            throw new Error(`Unsupported source language ${from}`);
+            throw new Error(`Unsupported source language ${from}\ncode:[1]`);
         }
         if (!matchTo) {
-            throw new Error(`Unsupported target language ${to}`);
+            throw new Error(`Unsupported target language ${to}\ncode:[2]`);
         }
         const nfrom = this._lan2lan[matchFrom] ?? matchFrom;
         const nto = this._lan2lan[matchTo] ?? matchTo;
