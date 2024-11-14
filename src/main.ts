@@ -1497,14 +1497,14 @@ const engineConfig0 = {
         }),
     chatgpt: () =>
         new Translator({
-            lan: ["auto"],
+            lan: [...languages],
             lan2lan: {},
             targetLan: languages.filter((i) => i !== "auto"),
             f: chatgpt,
         }),
     gemini: () =>
         new Translator({
-            lan: ["auto"],
+            lan: [...languages],
             lan2lan: {},
             targetLan: languages.filter((i) => i !== "auto"),
             f: gemini,
