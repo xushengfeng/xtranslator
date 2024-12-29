@@ -611,22 +611,40 @@ const bing = (
 };
 
 function parseJson(res: string) {
-    let parse = res;
-    if (res.includes("```")) {
-        const l = res.split("\n");
-        const start = l.findIndex((i) => i.includes("```"));
-        const end = l.findLastIndex((i) => i.includes("```"));
-        parse = l.slice(start + 1, end).join("\n");
-    }
+    const l = res.split("\n");
+    const listStart = l.findIndex((i) => i.startsWith("["));
+    const listEnd = l.findLastIndex((i) => i.endsWith("]"));
     try {
-        const list = JSON.parse(parse) as string[] | { [k: string]: string[] };
+        const list = JSON.parse(l.slice(listStart, listEnd + 1).join("\n"));
         if (Array.isArray(list)) {
-            return list;
+            return list as string[];
         }
-        return Object.values(list).flat();
-    } catch (error) {
-        return [parse];
+    } catch (error) {}
+
+    const objStart = l.findIndex((i) => i.startsWith("{"));
+    const objEnd = l.findLastIndex((i) => i.endsWith("}"));
+    try {
+        const obj = JSON.parse(
+            l.slice(objStart, objEnd + 1).join("\n"),
+        ) as Record<string, string[]>;
+        return Object.values(obj).flat();
+    } catch (error) {}
+
+    const codeStart = l.findIndex((i) => i.startsWith("```"));
+    const codeEnd = l.findLastIndex((i) => i.startsWith("```"));
+    if (codeStart >= 0 && codeEnd >= 0 && codeStart < codeEnd) {
+        const parse = l.slice(codeStart + 1, codeEnd).join("\n");
+        try {
+            const list = JSON.parse(parse) as
+                | string[]
+                | { [k: string]: string[] };
+            if (Array.isArray(list)) {
+                return list;
+            }
+            return Object.values(list).flat();
+        } catch (error) {}
     }
+    return [res];
 }
 
 function buildPrompt(p: string, text: string[], from = "auto", to = "auto") {
@@ -2158,4 +2176,4 @@ export default {
     },
 };
 
-export { matchFitLan };
+export { matchFitLan, parseJson };
