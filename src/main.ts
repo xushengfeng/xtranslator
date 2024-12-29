@@ -616,18 +616,28 @@ function parseJson(res: string) {
     const listEnd = l.findLastIndex((i) => i.endsWith("]"));
     try {
         const list = JSON.parse(l.slice(listStart, listEnd + 1).join("\n"));
-        if (Array.isArray(list)) {
-            return list as string[];
-        }
+        return flatObj(list);
     } catch (error) {}
+
+    function flatObj(obj: Record<string, unknown>) {
+        const res: string[] = [];
+        for (const k in obj) {
+            if (typeof obj[k] === "string") {
+                res.push(obj[k]);
+            } else if (typeof obj[k] === "object") {
+                res.push(...flatObj(obj[k] as Record<string, unknown>));
+            }
+        }
+        return res;
+    }
 
     const objStart = l.findIndex((i) => i.startsWith("{"));
     const objEnd = l.findLastIndex((i) => i.endsWith("}"));
     try {
         const obj = JSON.parse(
             l.slice(objStart, objEnd + 1).join("\n"),
-        ) as Record<string, string[]>;
-        return Object.values(obj).flat();
+        ) as Record<string, unknown>;
+        return flatObj(obj);
     } catch (error) {}
 
     const codeStart = l.findIndex((i) => i.startsWith("```"));
@@ -635,13 +645,8 @@ function parseJson(res: string) {
     if (codeStart >= 0 && codeEnd >= 0 && codeStart < codeEnd) {
         const parse = l.slice(codeStart + 1, codeEnd).join("\n");
         try {
-            const list = JSON.parse(parse) as
-                | string[]
-                | { [k: string]: string[] };
-            if (Array.isArray(list)) {
-                return list;
-            }
-            return Object.values(list).flat();
+            const list = JSON.parse(parse) as Record<string, unknown>;
+            return flatObj(list);
         } catch (error) {}
     }
     return [res];

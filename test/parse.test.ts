@@ -51,3 +51,19 @@ test("mark in string2", () => {
         ),
     ).to.deep.equal(["\n```\nhello\n```", "```world```"]);
 });
+
+test("nested obj", () => {
+    expect(
+        parseJson(
+            `以下是输出：\n\`\`\`json\n${JSON.stringify({ res: { 你好: "hello", 世界: "world" } })}`,
+        ),
+    ).to.deep.equal(mainResult);
+});
+
+test("nested obj", () => {
+    expect(
+        parseJson(
+            `以下是输出：\n\`\`\`json\n${JSON.stringify([{ 你好: "hello", 世界: "world" }])}`,
+        ),
+    ).to.deep.equal(mainResult);
+});
