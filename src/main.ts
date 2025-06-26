@@ -2169,10 +2169,22 @@ const eKey: {
     yandex: [],
 };
 
+function getEngine(name: string) {
+    if (engineConfig[name]) {
+        return engineConfig[name] as Translator<
+            string | string[],
+            { [name: string]: unknown },
+            language[number]
+        >;
+    }
+    return undefined;
+}
+
 export default {
     Translator,
     e: engineConfig,
     es: engineConfig0,
+    getEngine: getEngine,
     eKey,
     languages: {
         normal: languages,
