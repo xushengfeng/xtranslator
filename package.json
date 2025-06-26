@@ -1,6 +1,6 @@
 {
     "name": "xtranslator",
-    "version": "1.3.2",
+    "version": "1.4.0",
     "description": "",
     "main": "./dist/xtranslator.umd.js",
     "module": "./dist/xtranslator.es.js",
