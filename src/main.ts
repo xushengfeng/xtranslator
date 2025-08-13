@@ -453,7 +453,18 @@ const youdao = (
         fetchJSONP(`https://openapi.youdao.com/api?${params.toString()}`)
             .then((v) => v.json())
             .then((t) => {
-                re(t.translateResults.map((i) => i.translation));
+                // 检查API返回的错误
+                if (t.errorCode && t.errorCode !== '0') {
+                    throw new Error(`有道翻译API错误: ${t.errorCode} - ${t.msg || '未知错误'}`);
+                }
+                
+                // 检查返回数据结构
+                if (!t.translation || !Array.isArray(t.translation)) {
+                    console.error('有道翻译返回数据:', t);
+                    throw new Error('有道翻译返回数据格式错误');
+                }
+                
+                re(t.translation);
             })
             .catch(rj);
 
