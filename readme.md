@@ -2,7 +2,7 @@
 
 ## 简介（introduction）
 
-聚合翻译 api
+聚合翻译 api，支持浏览器、node环境
 
 ## 安装（installation）
 
@@ -59,3 +59,15 @@ console.log(await chatgpt.run(["what can i say", "see you again"], "auto", "zh")
 使用`Intl.DisplayNames`获取代码的自然语言名称，导出的`language.languagesNotInIntl`是不支持转换的代码，需要自己处理国际化
 
 使用时可以不用考虑语言代码大小写，提供了自动匹配：区域转文字（`zh-cn`->`zh-hans`）、模糊匹配（`zh-unknown`->`zh`如果支持`zh`或`zh-unknown`->`zh-hans`）
+
+## 测试
+
+复制一份`key.template.json`为`key.json`，填入自己的 key。
+
+运行全部引擎：
+
+```bash
+npm run test
+```
+
+你也可以在ide上安装`vitest`插件，运行部分引擎。注释unknown的是根据文档写的引擎，并没有经过测试，如果你测试成功，可以提醒我去掉注释。
