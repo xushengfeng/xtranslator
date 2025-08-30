@@ -95,8 +95,7 @@ test("engine.tencent", async () => {
     expect(r).toHaveLength(mainResult.length);
 });
 
-// unknown
-test("engine.tencentTransmart", async () => {
+test("engine.tencentTransmart", { timeout: 10000 }, async () => {
     const e = x.es.tencentTransmart();
     e.setKeys({});
     const r = await e.run(mainResult, fromLang, toLang);
