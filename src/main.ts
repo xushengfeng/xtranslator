@@ -692,7 +692,7 @@ const chatgpt = (
     to: string,
     keys: {
         key: string;
-        url: string;
+        url?: string;
         config?: { model: string; [k: string]: unknown };
         sysPrompt?: string;
         userPrompt?: string;
@@ -758,7 +758,7 @@ const gemini = (
     text: string[],
     from: string,
     to: string,
-    keys: { key: string; url: string; config?: object; userPrompt?: string },
+    keys: { key: string; url?: string; config?: object; userPrompt?: string },
     strictConfig = false,
 ) => {
     return new Promise((re: (text: string[]) => void, rj) => {

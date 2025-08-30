@@ -1,0 +1,30 @@
+{
+    "baidu": {
+        "appid": "",
+        "key": ""
+    },
+    "bing": {
+        "key": ""
+    },
+    "caiyun": {
+        "token": ""
+    },
+    "chatgpt": {
+        "key": "",
+        "url": ""
+    },
+    "deepl": {
+        "key": ""
+    },
+    "deeplx": { "url": "" },
+    "gemini": {
+        "key": ""
+    },
+    "niu": {
+        "key": ""
+    },
+    "youdao": {
+        "key": "",
+        "appid": ""
+    }
+}
