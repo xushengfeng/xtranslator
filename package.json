@@ -1,6 +1,6 @@
 {
     "name": "xtranslator",
-    "version": "1.4.1",
+    "version": "1.5.0",
     "description": "",
     "main": "./dist/xtranslator.umd.js",
     "module": "./dist/xtranslator.es.js",
@@ -20,10 +20,7 @@
         "preview": "vite preview"
     },
     "keywords": [],
-    "files": [
-        "dist/",
-        "src/"
-    ],
+    "files": ["dist/", "src/"],
     "author": "",
     "license": "Apache-2.0",
     "devDependencies": {
