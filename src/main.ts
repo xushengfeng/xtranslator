@@ -291,6 +291,7 @@ type eF = (
     from: string,
     to: string,
     keys: { [name: string]: unknown },
+    strictConfig?: boolean,
 ) => Promise<string[]>;
 
 class Translator<
@@ -327,7 +328,7 @@ class Translator<
         text: tt,
         from: ll,
         to: language[number],
-        op?: { strictMatch?: boolean },
+        op?: { strictMatch?: boolean; strictConfig?: boolean },
     ): Promise<tt> {
         const matchFrom = matchFitLan(from, this._lan, {
             strict: op?.strictMatch ?? false,
@@ -347,11 +348,24 @@ class Translator<
         if (typeof text === "string") {
             if (text.trim() === "") return "" as tt;
             return (
-                (await this.translate([text], nfrom, nto, this.keys)) || []
+                (await this.translate(
+                    [text],
+                    nfrom,
+                    nto,
+                    this.keys,
+                    op?.strictConfig,
+                )) || []
             ).join("\n") as tt;
         }
         if (text.length === 0) return [] as tt;
-        const list = (await this.translate(text, nfrom, nto, this.keys)) || [];
+        const list =
+            (await this.translate(
+                text,
+                nfrom,
+                nto,
+                this.keys,
+                op?.strictConfig,
+            )) || [];
         const r: string[] = new Array(text.length).fill("");
         for (const i in r) {
             if (list[i]) r[i] = list[i];
@@ -365,7 +379,7 @@ class Translator<
             this._targetLan.find((w) => w.slice(0, 2) === "zh") ||
             this._targetLan[0];
         const t = "The test passed";
-        const r = await this.run(t as t, from, to);
+        const r = await this.run(t as t, from, to, { strictConfig: true });
         return {
             from,
             to,
@@ -683,6 +697,7 @@ const chatgpt = (
         sysPrompt?: string;
         userPrompt?: string;
     },
+    strictConfig = false,
 ) => {
     return new Promise((re: (text: string[]) => void, rj) => {
         const txt = text;
@@ -709,24 +724,19 @@ const chatgpt = (
             { role: "assistant", content: '["你好世界","再见"]' },
             { role: "user", content: inputPrompt },
         ];
-        const config = {
-            model: "gpt-4o-mini",
-            temperature: 0.5,
-            top_p: 1,
-            frequency_penalty: 1,
-            presence_penalty: 1,
-            messages: m,
-            stream: false,
-        };
-        let userConfig = keys.config;
-        if (userConfig) {
-            const c = userConfig;
-            c.messages = m;
-            c.stream = false;
-            userConfig = c;
-        } else {
-            userConfig = config;
+
+        let userConfig = (keys.config ?? {}) as Record<string, unknown>;
+
+        if (typeof userConfig === "object" && !Array.isArray(userConfig)) {
+            if (strictConfig) {
+                throw new Error("userConfig must be an object");
+            }
+            userConfig = {};
         }
+        userConfig.model = "gpt-4o-mini";
+        userConfig.messages = m;
+        userConfig.stream = false;
+
         fetch(keys.url || "https://api.openai.com/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -749,6 +759,7 @@ const gemini = (
     from: string,
     to: string,
     keys: { key: string; url: string; config?: object; userPrompt?: string },
+    strictConfig = false,
 ) => {
     return new Promise((re: (text: string[]) => void, rj) => {
         const userPrompt = buildPrompt(
@@ -758,16 +769,14 @@ const gemini = (
             from,
             to,
         );
-        const m = {
-            contents: [{ parts: [{ text: userPrompt }] }],
-        };
-        const userConfig = keys.config;
-        if (userConfig) {
-            const c = userConfig;
-            for (const i in c) {
-                m[i] = c[i];
+        let userConfig = (keys.config ?? {}) as Record<string, unknown>;
+        if (typeof userConfig === "object" && !Array.isArray(userConfig)) {
+            if (strictConfig) {
+                throw new Error("userConfig must be an object");
             }
+            userConfig = {};
         }
+        userConfig.contents = [{ parts: [{ text: userPrompt }] }];
         const url = new URL(
             keys.url ||
                 "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent",
@@ -776,7 +785,7 @@ const gemini = (
         fetch(url.href, {
             method: "POST",
             headers: { "content-type": "application/json" },
-            body: JSON.stringify(m),
+            body: JSON.stringify(userConfig),
         })
             .then((v) => v.json())
             .then((t) => {
