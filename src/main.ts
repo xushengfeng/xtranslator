@@ -1,5 +1,10 @@
 /// <reference types="vite/client" />
 
+import MD5 from "blueimp-md5";
+import fetchJSONP from "fetch-jsonp";
+import sha256 from "crypto-js/sha256";
+import enc from "crypto-js/enc-hex";
+
 const languagesInIntl = [
     "af",
     "ak",
@@ -433,11 +438,6 @@ function matchFitLan(
     return map.get(filterLans.filter((i) => i !== mainLan)[0]); // zh-unkown -> zh-hans
 }
 
-import MD5 from "blueimp-md5";
-import fetchJSONP from "fetch-jsonp";
-import sha256 from "crypto-js/sha256";
-import enc from "crypto-js/enc-hex";
-
 const youdao = (
     text: string[],
     from: string,
@@ -504,7 +504,7 @@ const baidu = (
         const salt = new Date().getTime();
         const str1 = appid + text + salt + key;
         const sign = MD5(str1);
-        fetchJSONP(
+        (typeof window !== "undefined" ? fetchJSONP : fetch)(
             `https://api.fanyi.baidu.com/api/trans/vip/translate?q=${encodeURIComponent(
                 text.join("\n"),
             )}&from=${from}&to=${to}&appid=${appid}&salt=${salt}&sign=${sign}`,
