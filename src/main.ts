@@ -584,7 +584,7 @@ const caiyun = (
             source: text,
             trans_type: `${from}2${to}`,
             request_id: "demo",
-            detect: true,
+            detect: from === "auto",
         };
         const headers = {
             "content-type": "application/json",
@@ -1418,7 +1418,22 @@ const engineConfig0 = {
         }),
     caiyun: () =>
         new Translator({
-            lan: ["auto", "zh", "en", "ja"],
+            lan: [
+                "auto",
+                "zh",
+                "zh-Hant",
+                "en",
+                "ja",
+                "ko",
+                "de",
+                "es",
+                "fr",
+                "it",
+                "pt",
+                "ru",
+                "tr",
+                "vi",
+            ],
             lan2lan: {},
             f: caiyun,
         }),
