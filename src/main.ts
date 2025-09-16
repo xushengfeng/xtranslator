@@ -446,215 +446,213 @@ class ParseError extends Error {
     }
 }
 
-const youdao = (
+class ApiError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "ApiError";
+    }
+}
+
+function parseResponseJson(res: string) {
+    try {
+        return JSON.parse(res);
+    } catch (error) {
+        throw new ApiError(error.message);
+    }
+}
+
+async function xfetch(url: string | URL, options: RequestInit = {}) {
+    try {
+        const x = await fetch(url, options);
+        if (!x.ok) throw new Error(`HTTP error! status: ${x.status}`);
+        return x;
+    } catch (error) {
+        throw new NetworkError(error.message);
+    }
+}
+
+const youdao = async (
     text: string[],
     from: string,
     to: string,
     keys: { appid: string; key: string },
 ) => {
-    return new Promise((re: (text: string[]) => void, rj) => {
-        const appKey = keys.appid;
-        const key = keys.key;
-        const salt = String(new Date().getTime());
-        const curtime = String(Math.round(new Date().getTime() / 1000));
-        const str1 = appKey + truncate(text.join("")) + salt + curtime + key;
-        const sign = sha256(str1).toString(enc);
-        const data = {
-            appKey: appKey,
-            salt: salt,
-            from: from,
-            to: to,
-            sign: sign,
-            signType: "v3",
-            curtime: curtime,
-        };
-        const params = new URLSearchParams(data);
-        for (const t of text) {
-            params.append("q", t);
-        }
-        fetchJSONP(`https://openapi.youdao.com/api?${params.toString()}`)
-            .then((v) => v.json())
-            .then((t) => {
-                try {
-                    re(t.translation);
-                } catch (error) {
-                    rj(new ParseError(error.message));
-                }
-            })
-            .catch((error) => rj(new NetworkError(error.message)));
-
-        function truncate(q: string) {
-            const len = q.length;
-            if (len <= 20) return q;
-            return q.substring(0, 10) + len + q.substring(len - 10, len);
-        }
-    });
+    const appKey = keys.appid;
+    const key = keys.key;
+    const salt = String(new Date().getTime());
+    const curtime = String(Math.round(new Date().getTime() / 1000));
+    const str1 = appKey + truncate(text.join("")) + salt + curtime + key;
+    const sign = sha256(str1).toString(enc);
+    const data = {
+        appKey: appKey,
+        salt: salt,
+        from: from,
+        to: to,
+        sign: sign,
+        signType: "v3",
+        curtime: curtime,
+    };
+    const params = new URLSearchParams(data);
+    for (const t of text) {
+        params.append("q", t);
+    }
+    try {
+        const v = await fetchJSONP(
+            `https://openapi.youdao.com/api?${params.toString()}`,
+        );
+        // todo 这里判断网络错误
+        const t = await v.json();
+        return t.translation;
+    } catch (error) {
+        throw new NetworkError(error.message);
+    }
+    function truncate(q: string) {
+        const len = q.length;
+        if (len <= 20) return q;
+        return q.substring(0, 10) + len + q.substring(len - 10, len);
+    }
 };
 
-const baidu = (
+const baidu = async (
     text: string[],
     from: string,
     to: string,
     keys: { appid: string; key: string },
 ) => {
-    return new Promise((re: (text: string[]) => void, rj) => {
-        const appid = keys.appid;
-        const key = keys.key;
-        const salt = new Date().getTime();
-        const str1 = appid + text + salt + key;
-        const sign = MD5(str1);
-        (typeof window !== "undefined" ? fetchJSONP : fetch)(
+    const appid = keys.appid;
+    const key = keys.key;
+    const salt = new Date().getTime();
+    const str1 = appid + text + salt + key;
+    const sign = MD5(str1);
+    try {
+        const v = await (typeof window !== "undefined" ? fetchJSONP : fetch)(
             `https://api.fanyi.baidu.com/api/trans/vip/translate?q=${encodeURIComponent(
                 text.join("\n"),
             )}&from=${from}&to=${to}&appid=${appid}&salt=${salt}&sign=${sign}`,
-        )
-            .then((v) => v.json())
-            .then((t) => {
-                try {
-                    re(t.trans_result.map((v: { dst: string }) => v.dst));
-                } catch (error) {
-                    rj(new ParseError(error.message));
-                }
-            })
-            .catch((error) => rj(new NetworkError(error.message)));
-    });
+        );
+        const t = await v.json();
+        return t.trans_result.map((v: { dst: string }) => v.dst);
+    } catch (error) {
+        throw new NetworkError(error.message);
+    }
 };
 
-const deepl = (
+const deepl = async (
     text: string[],
     from: string,
     to: string,
     keys: { key: string },
 ) => {
-    return new Promise((re: (text: string[]) => void, rj) => {
-        fetch("https://api-free.deepl.com/v2/translate", {
-            body: JSON.stringify({
-                text: text,
-                source_lang: from,
-                target_lang: to,
-            }),
-            headers: {
-                Authorization: `DeepL-Auth-Key ${keys.key}`,
-                "Content-Type": "application/x-www-form-urlencoded",
-            },
-            method: "POST",
-        })
-            .then((v) => v.json())
-            .then((t) => {
-                try {
-                    re(t.translations.map((x: { text: string }) => x.text));
-                } catch (error) {
-                    rj(new ParseError(error.message));
-                }
-            })
-            .catch((error) => rj(new NetworkError(error.message)));
+    const v = await xfetch("https://api-free.deepl.com/v2/translate", {
+        body: JSON.stringify({
+            text: text,
+            source_lang: from,
+            target_lang: to,
+        }),
+        headers: {
+            Authorization: `DeepL-Auth-Key ${keys.key}`,
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+        method: "POST",
     });
+    const t = parseResponseJson(await v.text());
+    t;
+    if (!t) throw new ApiError("deepl");
+    try {
+        return t.translations.map((x: { text: string }) => x.text);
+    } catch (error) {
+        throw new ParseError(error.message);
+    }
 };
 
-const deeplx = (
+const deeplx = async (
     text: string[],
     from: string,
     to: string,
     keys: { url: string },
 ) => {
-    return new Promise((re: (text: string[]) => void, rj) => {
-        fetch(keys.url, {
-            body: JSON.stringify({
-                source_lang: from,
-                target_lang: to,
-                text: text,
-            }),
-            method: "POST",
-        })
-            .then((v) => v.json())
-            .then((t) => {
-                try {
-                    re(
-                        t.translations
-                            ? t.translations.map(
-                                  (x: { text: string }) => x.text,
-                              )
-                            : t.data,
-                    );
-                } catch (error) {
-                    rj(new ParseError(error.message));
-                }
-            })
-            .catch((error) => rj(new NetworkError(error.message)));
+    const v = await xfetch(keys.url, {
+        body: JSON.stringify({
+            source_lang: from,
+            target_lang: to,
+            text: text,
+        }),
+        method: "POST",
     });
+    const t = parseResponseJson(await v.text());
+    if (!t) throw new ApiError("deeplx");
+    try {
+        return t.translations
+            ? t.translations.map((x: { text: string }) => x.text)
+            : t.data;
+    } catch (error) {
+        throw new ParseError(error.message);
+    }
 };
 
-const caiyun = (
+const caiyun = async (
     text: string[],
     from: string,
     to: string,
     keys: { token: string },
 ) => {
-    return new Promise((re: (text: string[]) => void, rj) => {
-        const url = "https://api.interpreter.caiyunai.com/v1/translator";
-        const token = keys.token;
-        const payload = {
-            source: text,
-            trans_type: `${from}2${to}`,
-            request_id: "demo",
-            detect: from === "auto",
-        };
-        const headers = {
-            "content-type": "application/json",
-            "x-authorization": `token ${token}`,
-        };
-        fetch(url, { method: "POST", body: JSON.stringify(payload), headers })
-            .then((v) => v.json())
-            .then((t) => {
-                try {
-                    re(t.target);
-                } catch (error) {
-                    rj(new ParseError(error.message));
-                }
-            })
-            .catch((error) => rj(new NetworkError(error.message)));
+    const url = "https://api.interpreter.caiyunai.com/v1/translator";
+    const token = keys.token;
+    const payload = {
+        source: text,
+        trans_type: `${from}2${to}`,
+        request_id: "demo",
+        detect: from === "auto",
+    };
+    const headers = {
+        "content-type": "application/json",
+        "x-authorization": `token ${token}`,
+    };
+    const v = await xfetch(url, {
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers,
     });
+    const t = parseResponseJson(await v.text());
+    if (!t) throw new ApiError("caiyun");
+    return t.target;
 };
 
-const bing = (
+const bing = async (
     text: string[],
     from: string,
     to: string,
     keys: { key: string },
 ) => {
-    return new Promise((re: (text: string[]) => void, rj) => {
-        fetch(
-            `https://api.cognitive.microsofttranslator.com/translate?${new URLSearchParams(
-                {
-                    "api-version": "3.0",
-                    from: from,
-                    to: to,
-                },
-            ).toString()}`,
+    const v = await xfetch(
+        `https://api.cognitive.microsofttranslator.com/translate?${new URLSearchParams(
             {
-                method: "POST",
-                headers: {
-                    "Ocp-Apim-Subscription-Key": keys.key,
-                    "Content-type": "application/json",
-                    "X-ClientTraceId": crypto.randomUUID(),
-                },
-                body: JSON.stringify([
-                    {
-                        text: text,
-                    },
-                ]),
+                "api-version": "3.0",
+                from: from,
+                to: to,
             },
-        )
-            .then((v) => v.json())
-            .then((t) => {
-                try {
-                    re(t[0].translations.map((i: { text: string }) => i.text));
-                } catch (error) {
-                    rj(new ParseError(error.message));
-                }
-            })
-            .catch((error) => rj(new NetworkError(error.message)));
-    });
+        ).toString()}`,
+        {
+            method: "POST",
+            headers: {
+                "Ocp-Apim-Subscription-Key": keys.key,
+                "Content-type": "application/json",
+                "X-ClientTraceId": crypto.randomUUID(),
+            },
+            body: JSON.stringify([
+                {
+                    text: text,
+                },
+            ]),
+        },
+    );
+    const t = parseResponseJson(await v.text());
+    if (!t) throw new ApiError("bing");
+    try {
+        return t[0].translations.map((i: { text: string }) => i.text);
+    } catch (error) {
+        throw new ParseError(error.message);
+    }
 };
 
 function parseJson(res: string) {
@@ -825,163 +823,138 @@ const gemini = (
     });
 };
 
-const niu = (
+const niu = async (
     text: string[],
     from: string,
     to: string,
     keys: { key: string },
 ) => {
-    return new Promise((re: (text: string[]) => void, rj) => {
-        const data = {
-            from: from,
-            to: to,
-            apikey: keys.key,
-            src_text: text.join("\n"),
-        };
-
-        fetch("https://api.niutrans.com/NiuTransServer/translation", {
+    const data = {
+        from: from,
+        to: to,
+        apikey: keys.key,
+        src_text: text.join("\n"),
+    };
+    const response = await xfetch(
+        "https://api.niutrans.com/NiuTransServer/translation",
+        {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify(data),
-        })
-            .then((response) => response.json())
-            .then((result) => {
-                try {
-                    re(result.tgt_text.split("\n"));
-                } catch (error) {
-                    rj(new ParseError(error.message));
-                }
-            })
-            .catch((error) => rj(new NetworkError(error.message)));
-    });
+        },
+    );
+    const result = parseResponseJson(await response.text());
+    if (!result) throw new ApiError("niu");
+    try {
+        return result.tgt_text.split("\n");
+    } catch (error) {
+        throw new ParseError(error.message);
+    }
 };
 
-const volcengine = (
+const volcengine = async (
     text: string[],
     from: string,
     to: string,
     keys: Record<string, never>,
 ) => {
-    return new Promise((re: (text: string[]) => void, rj) => {
-        const data = {
-            source_language: from,
-            target_language: to,
-            text: text,
-        };
-
-        fetch("https://translate.volcengine.com/crx/translate/v1", {
+    const data = {
+        source_language: from,
+        target_language: to,
+        text: text,
+    };
+    const response = await xfetch(
+        "https://translate.volcengine.com/crx/translate/v1",
+        {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify(data),
-        })
-            .then((response) => response.json())
-            .then((result) => {
-                try {
-                    re(result.translation);
-                } catch (error) {
-                    rj(new ParseError(error.message));
-                }
-            })
-            .catch((error) => rj(new NetworkError(error.message)));
-    });
+        },
+    );
+    const result = parseResponseJson(await response.text());
+    if (!result) throw new ApiError("volcengine");
+    return result.translation;
 };
 
-const tencentTransmart = (
+const tencentTransmart = async (
     text: string[],
     from: string,
     to: string,
     keys: Record<string, never>,
 ) => {
-    return new Promise((re: (text: string[]) => void, rj) => {
-        const data = {
-            header: {
-                fn: "auto_translation",
-                session: "",
-                client_key: `browser-firefox-130.0.0-Linux-${crypto.randomUUID()}-${new Date().getTime().toString()}`,
-                user: "",
-            },
-            type: "plain",
-            model_category: "normal",
-            text_domain: "",
-            source: {
-                lang: from,
-                text_list: text,
-            },
-            target: {
-                lang: to,
-            },
-        };
-
-        fetch("https://yi.qq.com/api/imt", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(data),
-        })
-            .then((response) => response.json())
-            .then((result) => {
-                try {
-                    re(result.auto_translation);
-                } catch (error) {
-                    rj(new ParseError(error.message));
-                }
-            })
-            .catch((error) => rj(new NetworkError(error.message)));
+    const data = {
+        header: {
+            fn: "auto_translation",
+            session: "",
+            client_key: `browser-firefox-130.0.0-Linux-${crypto.randomUUID()}-${new Date().getTime().toString()}`,
+            user: "",
+        },
+        type: "plain",
+        model_category: "normal",
+        text_domain: "",
+        source: {
+            lang: from,
+            text_list: text,
+        },
+        target: {
+            lang: to,
+        },
+    };
+    const response = await xfetch("https://yi.qq.com/api/imt", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
     });
+    const result = parseResponseJson(await response.text());
+    if (!result) throw new ApiError("tencentTransmart");
+    try {
+        return result.auto_translation;
+    } catch (error) {
+        throw new ParseError(error.message);
+    }
 };
-const tencent = (
+const tencent = async (
     text: string[],
     from: string,
     to: string,
     keys: Record<string, never>,
 ) => {
-    return new Promise((re: (text: string[]) => void, rj) => {
-        const guid = crypto.randomUUID();
-
-        fetch("https://fanyi.qq.com/api/reauth12f", {
-            method: "POST",
-            headers: { Cookie: `fy_guid=${guid}` },
-        })
-            .then((v) => v.json())
-            .then((q) => {
-                try {
-                    const qtv = q.qtv;
-                    const qtk = q.qtk;
-                    const data = {
-                        source: from,
-                        target: to,
-                        sourceText: text.join("\n"),
-                        qtk: qtk,
-                        qtv: qtv,
-                        sessionUuid: `translate_uuid${new Date().getTime()}`,
-                    };
-                    fetch("https://fanyi.qq.com/api/translate", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/x-www-form-urlencoded",
-                        },
-                        body: new URLSearchParams(data),
-                    })
-                        .then((response) => response.json())
-                        .then((result) => {
-                            try {
-                                re(result.translate.records[0].targetText);
-                            } catch (error) {
-                                rj(new ParseError(error.message));
-                            }
-                        })
-                        .catch((error) => rj(new NetworkError(error.message)));
-                } catch (error) {
-                    rj(new ParseError(error.message));
-                }
-            })
-            .catch((error) => rj(new NetworkError(error.message)));
+    const guid = crypto.randomUUID();
+    const v = await xfetch("https://fanyi.qq.com/api/reauth12f", {
+        method: "POST",
+        headers: { Cookie: `fy_guid=${guid}` },
     });
+    const q = await v.json();
+    const qtv = q.qtv;
+    const qtk = q.qtk;
+    const data = {
+        source: from,
+        target: to,
+        sourceText: text.join("\n"),
+        qtk: qtk,
+        qtv: qtv,
+        sessionUuid: `translate_uuid${new Date().getTime()}`,
+    };
+    const response = await xfetch("https://fanyi.qq.com/api/translate", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams(data),
+    });
+    const result = parseResponseJson(await response.text());
+    if (!result) throw new ApiError("tencent");
+    try {
+        return result.translate.records[0].targetText;
+    } catch (error) {
+        throw new ParseError(error.message);
+    }
 };
 
 const google = async (
@@ -990,7 +963,6 @@ const google = async (
     to: string,
     keys: Record<string, never>,
 ) => {
-    const { promise, resolve, reject } = Promise.withResolvers<string[]>();
     const url = new URL(
         "https://translate.google.com/translate_a/single?dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&dt=t",
     );
@@ -1006,41 +978,33 @@ const google = async (
     url.searchParams.append("tsel", "0");
     url.searchParams.append("kc", "7");
     url.searchParams.append("q", text.map((i) => i.trim()).join("\n"));
-
-    fetch(url, {
+    const x = await xfetch(url, {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
         },
-    })
-        .then((x) => x.json())
-        .then((r) => {
-            try {
-                const x: string[][] = [];
-                const matchL: [string, string] = r[0]
-                    ?.map((i) => [i[0], i[1]])
-                    .filter((i) => i[0] !== null);
-                const nT = structuredClone(text);
-                let startI = 0;
-                for (const i of matchL) {
-                    const tIndex =
-                        nT
-                            .slice(startI)
-                            .findIndex((t) => matchSen(t, i[1]) > 0.8) + startI;
-                    startI = Math.max(tIndex, 0);
-                    x[startI] = x[startI] || [];
-                    x[startI].push(i[0]);
-                }
-                resolve(x.map((i) => i.join("")));
-            } catch (error) {
-                reject(new ParseError(error.message));
-            }
-        })
-        .catch((error) => {
-            reject(new NetworkError(error.message));
-        });
-
-    return promise;
+    });
+    const r = parseResponseJson(await x.text());
+    if (!r) throw new ApiError("google");
+    try {
+        const matchL: [string, string][] = r[0]
+            ?.map((i) => [i[0], i[1]])
+            .filter((i) => i[0] !== null);
+        const nT = structuredClone(text);
+        let startI = 0;
+        const result: string[][] = [];
+        for (const i of matchL) {
+            const tIndex =
+                nT.slice(startI).findIndex((t) => matchSen(t, i[1]) > 0.8) +
+                startI;
+            startI = Math.max(tIndex, 0);
+            result[startI] = result[startI] || [];
+            result[startI].push(i[0]);
+        }
+        return result.map((i) => i.join(""));
+    } catch (error) {
+        throw new ParseError(error.message);
+    }
 };
 
 function matchSen(s1: string, s2: string) {
@@ -1053,46 +1017,36 @@ function matchSen(s1: string, s2: string) {
     return (s1.length - s.length) / s2.length;
 }
 
-const yandex = (
+const yandex = async (
     text: string[],
     from: string,
     to: string,
     keys: Record<string, never>,
 ) => {
-    return new Promise((re: (text: string[]) => void, rj) => {
-        const url = new URL(
-            "https://translate.yandex.net/api/v1/tr.json/translate",
-        );
-        url.searchParams.append("srv", "android");
-        url.searchParams.append(
-            "id",
-            `${crypto.randomUUID().replaceAll("-", "")}-0-0`,
-        );
-
-        const data = new URLSearchParams();
-        data.append("source_lang", from);
-        data.append("target_lang", to);
-        for (const i of text) {
-            data.append("text", i);
-        }
-
-        fetch(url, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-            },
-            body: data,
-        })
-            .then((response) => response.json())
-            .then((result) => {
-                try {
-                    re(result.text);
-                } catch (error) {
-                    rj(new ParseError(error.message));
-                }
-            })
-            .catch((error) => rj(new NetworkError(error.message)));
+    const url = new URL(
+        "https://translate.yandex.net/api/v1/tr.json/translate",
+    );
+    url.searchParams.append("srv", "android");
+    url.searchParams.append(
+        "id",
+        `${crypto.randomUUID().replaceAll("-", "")}-0-0`,
+    );
+    const data = new URLSearchParams();
+    data.append("source_lang", from);
+    data.append("target_lang", to);
+    for (const i of text) {
+        data.append("text", i);
+    }
+    const response = await xfetch(url, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: data,
     });
+    const result = parseResponseJson(await response.text());
+    if (!result) throw new ApiError("yandex");
+    return result.text;
 };
 
 const engineConfig0 = {
