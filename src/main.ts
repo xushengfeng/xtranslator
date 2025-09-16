@@ -438,6 +438,20 @@ function matchFitLan(
     return map.get(filterLans.filter((i) => i !== mainLan)[0]); // zh-unkown -> zh-hans
 }
 
+class NetworkError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "NetworkError";
+    }
+}
+
+class ParseError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "ParseError";
+    }
+}
+
 const youdao = (
     text: string[],
     from: string,
@@ -467,22 +481,13 @@ const youdao = (
         fetchJSONP(`https://openapi.youdao.com/api?${params.toString()}`)
             .then((v) => v.json())
             .then((t) => {
-                // 检查API返回的错误
-                if (t.errorCode && t.errorCode !== "0") {
-                    throw new Error(
-                        `有道翻译API错误: ${t.errorCode} - ${t.msg || "未知错误"}`,
-                    );
+                try {
+                    re(t.translation);
+                } catch (error) {
+                    rj(new ParseError(error.message));
                 }
-
-                // 检查返回数据结构
-                if (!t.translation || !Array.isArray(t.translation)) {
-                    console.error("有道翻译返回数据:", t);
-                    throw new Error("有道翻译返回数据格式错误");
-                }
-
-                re(t.translation);
             })
-            .catch(rj);
+            .catch((error) => rj(new NetworkError(error.message)));
 
         function truncate(q: string) {
             const len = q.length;
@@ -511,10 +516,13 @@ const baidu = (
         )
             .then((v) => v.json())
             .then((t) => {
-                const l = t.trans_result.map((v) => v.dst);
-                re(l);
+                try {
+                    re(t.trans_result.map((v: { dst: string }) => v.dst));
+                } catch (error) {
+                    rj(new ParseError(error.message));
+                }
             })
-            .catch(rj);
+            .catch((error) => rj(new NetworkError(error.message)));
     });
 };
 
@@ -539,10 +547,13 @@ const deepl = (
         })
             .then((v) => v.json())
             .then((t) => {
-                const l = t.translations.map((x) => x.text);
-                re(l);
+                try {
+                    re(t.translations.map((x: { text: string }) => x.text));
+                } catch (error) {
+                    rj(new ParseError(error.message));
+                }
             })
-            .catch(rj);
+            .catch((error) => rj(new NetworkError(error.message)));
     });
 };
 
@@ -563,11 +574,19 @@ const deeplx = (
         })
             .then((v) => v.json())
             .then((t) => {
-                if (t.translations) {
-                    re(t.translations.map((x) => x.text));
-                } else re(t.data);
+                try {
+                    re(
+                        t.translations
+                            ? t.translations.map(
+                                  (x: { text: string }) => x.text,
+                              )
+                            : t.data,
+                    );
+                } catch (error) {
+                    rj(new ParseError(error.message));
+                }
             })
-            .catch(rj);
+            .catch((error) => rj(new NetworkError(error.message)));
     });
 };
 
@@ -593,10 +612,13 @@ const caiyun = (
         fetch(url, { method: "POST", body: JSON.stringify(payload), headers })
             .then((v) => v.json())
             .then((t) => {
-                console.log(t);
-                re(t.target);
+                try {
+                    re(t.target);
+                } catch (error) {
+                    rj(new ParseError(error.message));
+                }
             })
-            .catch(rj);
+            .catch((error) => rj(new NetworkError(error.message)));
     });
 };
 
@@ -631,9 +653,13 @@ const bing = (
         )
             .then((v) => v.json())
             .then((t) => {
-                re(t[0].translations.map((i) => i.text));
+                try {
+                    re(t[0].translations.map((i: { text: string }) => i.text));
+                } catch (error) {
+                    rj(new ParseError(error.message));
+                }
             })
-            .catch(rj);
+            .catch((error) => rj(new NetworkError(error.message)));
     });
 };
 
@@ -747,10 +773,15 @@ const chatgpt = (
         })
             .then((v) => v.json())
             .then((t) => {
-                const res = t.message?.content || t.choices[0].message.content;
-                re(parseJson(res));
+                try {
+                    const res =
+                        t.message?.content || t.choices[0].message.content;
+                    re(parseJson(res));
+                } catch (error) {
+                    rj(new ParseError(error.message));
+                }
             })
-            .catch(rj);
+            .catch((error) => rj(new NetworkError(error.message)));
     });
 };
 
@@ -789,10 +820,14 @@ const gemini = (
         })
             .then((v) => v.json())
             .then((t) => {
-                const res = t.candidates[0].content.parts[0].text;
-                re(parseJson(res));
+                try {
+                    const res = t.candidates?.[0]?.content?.parts?.[0]?.text;
+                    re(parseJson(res));
+                } catch (error) {
+                    rj(new ParseError(error.message));
+                }
             })
-            .catch(rj);
+            .catch((error) => rj(new NetworkError(error.message)));
     });
 };
 
@@ -819,9 +854,13 @@ const niu = (
         })
             .then((response) => response.json())
             .then((result) => {
-                re(result.tgt_text.split("\n"));
+                try {
+                    re(result.tgt_text.split("\n"));
+                } catch (error) {
+                    rj(new ParseError(error.message));
+                }
             })
-            .catch(rj);
+            .catch((error) => rj(new NetworkError(error.message)));
     });
 };
 
@@ -847,9 +886,13 @@ const volcengine = (
         })
             .then((response) => response.json())
             .then((result) => {
-                re(result.translation);
+                try {
+                    re(result.translation);
+                } catch (error) {
+                    rj(new ParseError(error.message));
+                }
             })
-            .catch(rj);
+            .catch((error) => rj(new NetworkError(error.message)));
     });
 };
 
@@ -888,9 +931,13 @@ const tencentTransmart = (
         })
             .then((response) => response.json())
             .then((result) => {
-                re(result.auto_translation);
+                try {
+                    re(result.auto_translation);
+                } catch (error) {
+                    rj(new ParseError(error.message));
+                }
             })
-            .catch(rj);
+            .catch((error) => rj(new NetworkError(error.message)));
     });
 };
 const tencent = (
@@ -908,30 +955,38 @@ const tencent = (
         })
             .then((v) => v.json())
             .then((q) => {
-                const qtv = q.qtv;
-                const qtk = q.qtk;
-
-                const data = {
-                    source: from,
-                    target: to,
-                    sourceText: text.join("\n"),
-                    qtk: qtk,
-                    qtv: qtv,
-                    sessionUuid: `translate_uuid${new Date().getTime()}`,
-                };
-                fetch("https://fanyi.qq.com/api/translate", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/x-www-form-urlencoded",
-                    },
-                    body: new URLSearchParams(data),
-                })
-                    .then((response) => response.json())
-                    .then((result) => {
-                        re(result.translate.records[0].targetText);
+                try {
+                    const qtv = q.qtv;
+                    const qtk = q.qtk;
+                    const data = {
+                        source: from,
+                        target: to,
+                        sourceText: text.join("\n"),
+                        qtk: qtk,
+                        qtv: qtv,
+                        sessionUuid: `translate_uuid${new Date().getTime()}`,
+                    };
+                    fetch("https://fanyi.qq.com/api/translate", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/x-www-form-urlencoded",
+                        },
+                        body: new URLSearchParams(data),
                     })
-                    .catch(rj);
-            });
+                        .then((response) => response.json())
+                        .then((result) => {
+                            try {
+                                re(result.translate.records[0].targetText);
+                            } catch (error) {
+                                rj(new ParseError(error.message));
+                            }
+                        })
+                        .catch((error) => rj(new NetworkError(error.message)));
+                } catch (error) {
+                    rj(new ParseError(error.message));
+                }
+            })
+            .catch((error) => rj(new NetworkError(error.message)));
     });
 };
 
@@ -958,33 +1013,38 @@ const google = async (
     url.searchParams.append("kc", "7");
     url.searchParams.append("q", text.map((i) => i.trim()).join("\n"));
 
-    try {
-        const r = await (
-            await fetch(url, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            })
-        ).json();
-        const x: string[][] = [];
-        const matchL: [string, string] = r[0]
-            ?.map((i) => [i[0], i[1]])
-            .filter((i) => i[0] !== null);
-        const nT = structuredClone(text);
-        let startI = 0;
-        for (const i of matchL) {
-            const tIndex =
-                nT.slice(startI).findIndex((t) => matchSen(t, i[1]) > 0.8) +
-                startI;
-            startI = Math.max(tIndex, 0);
-            x[startI] = x[startI] || [];
-            x[startI].push(i[0]);
-        }
-        resolve(x.map((i) => i.join("")));
-    } catch (error) {
-        reject(error);
-    }
+    fetch(url, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+        },
+    })
+        .then((x) => x.json())
+        .then((r) => {
+            try {
+                const x: string[][] = [];
+                const matchL: [string, string] = r[0]
+                    ?.map((i) => [i[0], i[1]])
+                    .filter((i) => i[0] !== null);
+                const nT = structuredClone(text);
+                let startI = 0;
+                for (const i of matchL) {
+                    const tIndex =
+                        nT
+                            .slice(startI)
+                            .findIndex((t) => matchSen(t, i[1]) > 0.8) + startI;
+                    startI = Math.max(tIndex, 0);
+                    x[startI] = x[startI] || [];
+                    x[startI].push(i[0]);
+                }
+                resolve(x.map((i) => i.join("")));
+            } catch (error) {
+                reject(new ParseError(error.message));
+            }
+        })
+        .catch((error) => {
+            reject(new NetworkError(error.message));
+        });
 
     return promise;
 };
@@ -1031,9 +1091,13 @@ const yandex = (
         })
             .then((response) => response.json())
             .then((result) => {
-                re(result.text);
+                try {
+                    re(result.text);
+                } catch (error) {
+                    rj(new ParseError(error.message));
+                }
             })
-            .catch(rj);
+            .catch((error) => rj(new NetworkError(error.message)));
     });
 };
 
@@ -2227,6 +2291,10 @@ export default {
         normal: languages,
         inIntl: languagesInIntl,
         notInIntl: languagesNotInIntl,
+    },
+    error: {
+        NetworkError,
+        ParseError,
     },
 };
 
