@@ -300,7 +300,6 @@ type eF = (
 ) => Promise<string[]>;
 
 class Translator<
-    t extends string | string[],
     k extends { [name: string]: unknown },
     l extends language[number],
 > {
@@ -329,7 +328,7 @@ class Translator<
         this.keys = structuredClone(keys);
         return keys;
     }
-    async run<tt extends t, ll extends l>(
+    async run<tt extends string | string[], ll extends l>(
         text: tt,
         from: ll,
         to: language[number],
@@ -350,27 +349,22 @@ class Translator<
         const nfrom = this._lan2lan[matchFrom] ?? matchFrom;
         const nto = this._lan2lan[matchTo] ?? matchTo;
 
+        const ntext = (typeof text === "string" ? [text] : text) as string[];
         if (typeof text === "string") {
             if (text.trim() === "") return "" as tt;
-            return (
-                (await this.translate(
-                    [text],
-                    nfrom,
-                    nto,
-                    this.keys,
-                    op?.strictConfig,
-                )) || []
-            ).join("\n") as tt;
         }
         if (text.length === 0) return [] as tt;
         const list =
             (await this.translate(
-                text,
+                ntext,
                 nfrom,
                 nto,
                 this.keys,
                 op?.strictConfig,
             )) || [];
+        if (typeof text === "string") {
+            return list.join("") as tt;
+        }
         const r: string[] = new Array(text.length).fill("");
         for (const i in r) {
             if (list[i]) r[i] = list[i];
@@ -384,7 +378,7 @@ class Translator<
             this._targetLan.find((w) => w.slice(0, 2) === "zh") ||
             this._targetLan[0];
         const t = "The test passed";
-        const r = await this.run(t as t, from, to, { strictConfig: true });
+        const r = await this.run(t, from, to, { strictConfig: true });
         return {
             from,
             to,
@@ -2273,7 +2267,6 @@ const eKey: {
 function getEngine(name: string) {
     if (engineConfig[name]) {
         return engineConfig[name] as Translator<
-            string | string[],
             { [name: string]: unknown },
             language[number]
         >;
