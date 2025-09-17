@@ -41,7 +41,6 @@ test("engine.chatgpt", async () => {
     expect(r).toHaveLength(mainResult.length);
 });
 
-// unknown
 test("engine.deepl", async () => {
     const e = x.es.deepl();
     e.setKeys({ key: keyData.deepl.key, free: keyData.deepl.free });

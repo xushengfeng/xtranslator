@@ -572,13 +572,13 @@ const deepl = async (
             }),
             headers: {
                 Authorization: `DeepL-Auth-Key ${keys.key}`,
-                "Content-Type": "application/x-www-form-urlencoded",
+                "Content-Type": "application/json",
             },
             method: "POST",
         },
     );
     const t = parseResponseJson(await v.text());
-    if (!t.translation) throw new ApiError(JSON.stringify(t));
+    if (!t.translations) throw new ApiError(JSON.stringify(t));
     try {
         return t.translations.map((x: { text: string }) => x.text);
     } catch (error) {
@@ -601,7 +601,7 @@ const deeplx = async (
         method: "POST",
     });
     const t = parseResponseJson(await v.text());
-    if (!t.translation && !t.data) throw new ApiError(JSON.stringify(t));
+    if (!t.translations && !t.data) throw new ApiError(JSON.stringify(t));
     try {
         return t.translations
             ? t.translations.map((x: { text: string }) => x.text)
