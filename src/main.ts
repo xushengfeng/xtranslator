@@ -464,9 +464,23 @@ function parseResponseJson(res: string) {
 async function xfetch(url: string | URL, options: RequestInit = {}) {
     try {
         const x = await fetch(url, options);
-        if (!x.ok) throw new Error(`HTTP error! status: ${x.status}`);
+        if (!x.ok) {
+            try {
+                const errorResponse = await x.text();
+                throw new ApiError(
+                    `HTTP error! status: ${x.status}, response: ${errorResponse}`,
+                );
+            } catch (error) {
+                throw new NetworkError(
+                    `HTTP error! status: ${x.status}, message: ${error.message}`,
+                );
+            }
+        }
         return x;
     } catch (error) {
+        if (error instanceof ApiError || error instanceof NetworkError) {
+            throw error;
+        }
         throw new NetworkError(error.message);
     }
 }
