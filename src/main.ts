@@ -475,7 +475,7 @@ const youdao = async (
     text: string[],
     from: string,
     to: string,
-    keys: { appid: string; key: string },
+    keys: { appid: string; key: string; jsonp?: boolean },
 ) => {
     const appKey = keys.appid;
     const key = keys.key;
@@ -497,9 +497,9 @@ const youdao = async (
         params.append("q", t);
     }
     try {
-        const v = await fetchJSONP(
-            `https://openapi.youdao.com/api?${params.toString()}`,
-        );
+        const v = await (typeof window !== "undefined" && keys.jsonp
+            ? fetchJSONP
+            : fetch)(`https://openapi.youdao.com/api?${params.toString()}`);
         // todo 这里判断网络错误
         const t = await v.json();
         return t.translation;
@@ -517,7 +517,7 @@ const baidu = async (
     text: string[],
     from: string,
     to: string,
-    keys: { appid: string; key: string },
+    keys: { appid: string; key: string; jsonp?: boolean },
 ) => {
     const appid = keys.appid;
     const key = keys.key;
@@ -526,7 +526,9 @@ const baidu = async (
     const str1 = appid + textStr + salt + key;
     const sign = MD5(str1);
     try {
-        const v = await (typeof window !== "undefined" ? fetchJSONP : fetch)(
+        const v = await (typeof window !== "undefined" && keys.jsonp
+            ? fetchJSONP
+            : fetch)(
             `https://api.fanyi.baidu.com/api/trans/vip/translate?q=${encodeURIComponent(
                 textStr,
             )}&from=${from}&to=${to}&appid=${appid}&salt=${salt}&sign=${sign}`,
