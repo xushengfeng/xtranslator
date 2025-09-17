@@ -558,20 +558,25 @@ const deepl = async (
     text: string[],
     from: string,
     to: string,
-    keys: { key: string },
+    keys: { key: string; free: boolean },
 ) => {
-    const v = await xfetch("https://api-free.deepl.com/v2/translate", {
-        body: JSON.stringify({
-            text: text,
-            source_lang: from,
-            target_lang: to,
-        }),
-        headers: {
-            Authorization: `DeepL-Auth-Key ${keys.key}`,
-            "Content-Type": "application/x-www-form-urlencoded",
+    const v = await xfetch(
+        keys.free
+            ? "https://api-free.deepl.com/v2/translate"
+            : "https://api.deepl.com/v2/translate",
+        {
+            body: JSON.stringify({
+                text: text,
+                source_lang: from,
+                target_lang: to,
+            }),
+            headers: {
+                Authorization: `DeepL-Auth-Key ${keys.key}`,
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            method: "POST",
         },
-        method: "POST",
-    });
+    );
     const t = parseResponseJson(await v.text());
     if (!t.translation) throw new ApiError(JSON.stringify(t));
     try {
