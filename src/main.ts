@@ -592,7 +592,7 @@ const deeplx = async (
         body: JSON.stringify({
             source_lang: from,
             target_lang: to,
-            text: text,
+            text: text.join("\n"),
         }),
         method: "POST",
     });
@@ -601,7 +601,7 @@ const deeplx = async (
     try {
         return t.translations
             ? t.translations.map((x: { text: string }) => x.text)
-            : t.data;
+            : t.data.split("\n");
     } catch (error) {
         throw new ParseError(error.message);
     }
