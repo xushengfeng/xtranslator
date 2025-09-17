@@ -457,7 +457,7 @@ function parseResponseJson(res: string) {
     try {
         return JSON.parse(res);
     } catch (error) {
-        throw new ApiError(error.message);
+        throw new ApiError(`Failed to parse response JSON: ${res}`);
     }
 }
 
@@ -573,8 +573,7 @@ const deepl = async (
         method: "POST",
     });
     const t = parseResponseJson(await v.text());
-    t;
-    if (!t) throw new ApiError("deepl");
+    if (!t.translation) throw new ApiError(JSON.stringify(t));
     try {
         return t.translations.map((x: { text: string }) => x.text);
     } catch (error) {
@@ -597,7 +596,7 @@ const deeplx = async (
         method: "POST",
     });
     const t = parseResponseJson(await v.text());
-    if (!t) throw new ApiError("deeplx");
+    if (!t.translation && !t.data) throw new ApiError(JSON.stringify(t));
     try {
         return t.translations
             ? t.translations.map((x: { text: string }) => x.text)
@@ -631,7 +630,7 @@ const caiyun = async (
         headers,
     });
     const t = parseResponseJson(await v.text());
-    if (!t) throw new ApiError("caiyun");
+    if (!t.target) throw new ApiError(JSON.stringify(t));
     return t.target;
 };
 
