@@ -522,12 +522,13 @@ const baidu = async (
     const appid = keys.appid;
     const key = keys.key;
     const salt = new Date().getTime();
-    const str1 = appid + text + salt + key;
+    const textStr = text.join("\n");
+    const str1 = appid + textStr + salt + key;
     const sign = MD5(str1);
     try {
         const v = await (typeof window !== "undefined" ? fetchJSONP : fetch)(
             `https://api.fanyi.baidu.com/api/trans/vip/translate?q=${encodeURIComponent(
-                text.join("\n"),
+                textStr,
             )}&from=${from}&to=${to}&appid=${appid}&salt=${salt}&sign=${sign}`,
         );
         const t = await v.json();

@@ -8,7 +8,6 @@ const mainResult = ["what can i say", "see you again"];
 const fromLang = "en";
 const toLang = "zh";
 
-// unknown
 test("engine.baidu", async () => {
     const e = x.es.baidu();
     e.setKeys({ appid: keyData.baidu.appid, key: keyData.baidu.key });
