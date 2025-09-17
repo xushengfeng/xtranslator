@@ -2245,6 +2245,7 @@ export default {
     error: {
         NetworkError,
         ParseError,
+        ApiError,
     },
 };
 
