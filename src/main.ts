@@ -766,13 +766,12 @@ const chatgpt = (
 
         let userConfig = (keys.config ?? {}) as Record<string, unknown>;
 
-        if (typeof userConfig === "object" && !Array.isArray(userConfig)) {
+        if (!(typeof userConfig === "object" && !Array.isArray(userConfig))) {
             if (strictConfig) {
                 throw new Error("userConfig must be an object");
             }
             userConfig = {};
         }
-        userConfig.model = "gpt-4o-mini";
         userConfig.messages = m;
         userConfig.stream = false;
 
@@ -814,7 +813,7 @@ const gemini = (
             to,
         );
         let userConfig = (keys.config ?? {}) as Record<string, unknown>;
-        if (typeof userConfig === "object" && !Array.isArray(userConfig)) {
+        if (!(typeof userConfig === "object" && !Array.isArray(userConfig))) {
             if (strictConfig) {
                 throw new Error("userConfig must be an object");
             }

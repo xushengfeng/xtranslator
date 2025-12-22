@@ -11,7 +11,8 @@
     },
     "chatgpt": {
         "key": "",
-        "url": ""
+        "url": "",
+        "config": {}
     },
     "deepl": {
         "key": "",

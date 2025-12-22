@@ -35,7 +35,11 @@ test("engine.caiyun", async () => {
 
 test("engine.chatgpt", async () => {
     const e = x.es.chatgpt();
-    e.setKeys({ key: keyData.chatgpt.key, url: keyData.chatgpt.url });
+    e.setKeys({
+        key: keyData.chatgpt.key,
+        url: keyData.chatgpt.url,
+        config: keyData.chatgpt.config,
+    });
     const r = await e.run(mainResult, fromLang, toLang);
     console.log(r);
     expect(r).toHaveLength(mainResult.length);
