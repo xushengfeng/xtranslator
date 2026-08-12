@@ -6,6 +6,7 @@
     "module": "./dist/xtranslator.es.js",
     "exports": {
         ".": {
+            "types": "./dist/src/main.d.ts",
             "import": "./dist/xtranslator.es.js",
             "require": "./dist/xtranslator.umd.js"
         }
@@ -15,7 +16,7 @@
         "url": "https://github.com/xushengfeng/xtranslator"
     },
     "type": "module",
-    "types": "./src/main.ts",
+    "types": "./dist/src/main.d.ts",
     "scripts": {
         "test": "vitest",
         "dev": "vite --host 0.0.0.0",
@@ -23,10 +24,7 @@
         "preview": "vite preview"
     },
     "keywords": [],
-    "files": [
-        "dist/",
-        "src/"
-    ],
+    "files": ["dist/"],
     "author": "",
     "license": "Apache-2.0",
     "devDependencies": {
@@ -36,6 +34,7 @@
         "fetch-jsonp": "^1.3.0",
         "typescript": "^5.1.3",
         "vite": "^4.3.9",
+        "vite-plugin-dts": "^5.0.3",
         "vitest": "^2.1.4"
     }
 }
