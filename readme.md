@@ -44,8 +44,6 @@ console.log(await chatgpt.run(["what can i say", "see you again"], "auto", "zh")
 -   [x] chatgpt（ollama） 可自定义提示词
 -   [x] gemini 可自定义提示词
 -   [x] 小牛
--   [x] 腾讯交互式
--   [x] 腾讯
 -   [x] 火山
 -   [x] 谷歌（免费）
 -   [x] Yandex（免费）
