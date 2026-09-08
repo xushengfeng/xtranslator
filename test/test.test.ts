@@ -88,23 +88,6 @@ test("engine.niu", async () => {
 });
 
 // unknown
-test("engine.tencent", async () => {
-    const e = x.es.tencent();
-    e.setKeys({});
-    const r = await e.run(mainResult, fromLang, toLang);
-    console.log(r);
-    expect(r).toHaveLength(mainResult.length);
-});
-
-test("engine.tencentTransmart", { timeout: 10000 }, async () => {
-    const e = x.es.tencentTransmart();
-    e.setKeys({});
-    const r = await e.run(mainResult, fromLang, toLang);
-    console.log(r);
-    expect(r).toHaveLength(mainResult.length);
-});
-
-// unknown
 test("engine.volcengine", async () => {
     const e = x.es.volcengine();
     e.setKeys({});

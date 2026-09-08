@@ -900,83 +900,6 @@ const volcengine = async (
     return result.translation;
 };
 
-const tencentTransmart = async (
-    text: string[],
-    from: string,
-    to: string,
-    keys: Record<string, never>,
-) => {
-    const data = {
-        header: {
-            fn: "auto_translation",
-            session: "",
-            client_key: `browser-firefox-130.0.0-Linux-${crypto.randomUUID()}-${new Date().getTime().toString()}`,
-            user: "",
-        },
-        type: "plain",
-        model_category: "normal",
-        text_domain: "",
-        source: {
-            lang: from,
-            text_list: text,
-        },
-        target: {
-            lang: to,
-        },
-    };
-    const response = await xfetch("https://yi.qq.com/api/imt", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-    });
-    const result = parseResponseJson(await response.text());
-    if (!result) throw new ApiError("tencentTransmart");
-    try {
-        return result.auto_translation;
-    } catch (error) {
-        throw new ParseError(error.message);
-    }
-};
-const tencent = async (
-    text: string[],
-    from: string,
-    to: string,
-    keys: Record<string, never>,
-) => {
-    const guid = crypto.randomUUID();
-    const v = await xfetch("https://fanyi.qq.com/api/reauth12f", {
-        method: "POST",
-        headers: { Cookie: `fy_guid=${guid}` },
-    });
-    const q = await v.json();
-    const qtv = q.qtv;
-    const qtk = q.qtk;
-    const data = {
-        source: from,
-        target: to,
-        sourceText: text.join("\n"),
-        qtk: qtk,
-        qtv: qtv,
-        sessionUuid: `translate_uuid${new Date().getTime()}`,
-    };
-    const response = await xfetch("https://fanyi.qq.com/api/translate", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams(data),
-    });
-    const result = parseResponseJson(await response.text());
-    if (!result) throw new ApiError("tencent");
-    try {
-        return result.translate.records[0].targetText;
-    } catch (error) {
-        throw new ParseError(error.message);
-    }
-};
-
 const google = async (
     text: string[],
     from: string,
@@ -1822,58 +1745,6 @@ const engineConfig0 = {
             lan2lan: {},
             f: volcengine,
         }),
-    tencentTransmart: () =>
-        new Translator({
-            lan: [
-                "auto",
-                "zh",
-                "zh-Hant",
-                "en",
-                "ja",
-                "ko",
-                "fr",
-                "es",
-                "ru",
-                "de",
-                "it",
-                "tr",
-                "pt",
-                "vi",
-                "id",
-                "th",
-                "ms",
-                "ar",
-                "km",
-            ],
-            lan2lan: { "zh-Hant": "zh-TW" },
-            f: tencentTransmart,
-        }),
-    tencent: () =>
-        new Translator({
-            lan: [
-                "auto",
-                "zh",
-                "zh-Hant",
-                "en",
-                "ja",
-                "ko",
-                "fr",
-                "es",
-                "ru",
-                "de",
-                "it",
-                "tr",
-                "pt",
-                "vi",
-                "id",
-                "th",
-                "ms",
-                "ar",
-                "km",
-            ],
-            lan2lan: { "zh-Hant": "zh-TW" },
-            f: tencent,
-        }),
     google: () =>
         new Translator({
             lan: [
@@ -2172,8 +2043,6 @@ const engineConfig = {
     gemini: engineConfig0.gemini(),
     niu: engineConfig0.niu(),
     volcengine: engineConfig0.volcengine(),
-    tencentTransmart: engineConfig0.tencentTransmart(),
-    tencent: engineConfig0.tencent(),
     google: engineConfig0.google(),
     yandex: engineConfig0.yandex(),
 };
@@ -2207,8 +2076,6 @@ const eKey: {
     ],
     niu: [{ name: "key" }],
     volcengine: [],
-    tencentTransmart: [],
-    tencent: [],
     google: [],
     yandex: [],
 };
