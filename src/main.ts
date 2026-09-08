@@ -983,45 +983,20 @@ const google = async (
     to: string,
     keys: Record<string, never>,
 ) => {
-    const url = new URL(
-        "https://translate.google.com/translate_a/single?dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&dt=t",
-    );
-    url.searchParams.append("client", "gtx");
-    url.searchParams.append("sl", from);
-    url.searchParams.append("tl", to);
-    url.searchParams.append("hl", to);
-    url.searchParams.append("dt", "t");
-    url.searchParams.append("ie", "UTF-8");
-    url.searchParams.append("oe", "UTF-8");
-    url.searchParams.append("otf", "1");
-    url.searchParams.append("ssel", "0");
-    url.searchParams.append("tsel", "0");
-    url.searchParams.append("kc", "7");
-    url.searchParams.append("q", text.map((i) => i.trim()).join("\n"));
+    const url = "https://translate-pa.googleapis.com/v1/translateHtml";
+    const body = [[text, from, to], "wt_lib"];
     const x = await xfetch(url, {
-        method: "GET",
+        method: "POST",
         headers: {
-            "Content-Type": "application/json",
+            "Content-Type": "application/json+protobuf",
+            "X-Goog-API-Key": "AIzaSyATBXajvzQLTDHEQbcpq0Ihe0vWDHmO520",
         },
+        body: JSON.stringify(body),
     });
     const r = parseResponseJson(await x.text());
-    if (!r) throw new ApiError("google");
+    if (!r || !r[0]) throw new ApiError("google");
     try {
-        const matchL: [string, string][] = r[0]
-            ?.map((i) => [i[0], i[1]])
-            .filter((i) => i[0] !== null);
-        const nT = structuredClone(text);
-        let startI = 0;
-        const result: string[][] = [];
-        for (const i of matchL) {
-            const tIndex =
-                nT.slice(startI).findIndex((t) => matchSen(t, i[1]) > 0.8) +
-                startI;
-            startI = Math.max(tIndex, 0);
-            result[startI] = result[startI] || [];
-            result[startI].push(i[0]);
-        }
-        return result.map((i) => i.join(""));
+        return r[0] as string[];
     } catch (error) {
         throw new ParseError(error.message);
     }
